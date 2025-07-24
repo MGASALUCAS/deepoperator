@@ -1,9 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { ChartBar, TrendingUp, Users, Bell, Settings, Maximize } from "lucide-react";
+import { ChartBar, TrendingUp, Users, Bell } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import PowerBICard from "./PowerBICard";
 
 interface MetricData {
   metric: string;
@@ -181,56 +181,11 @@ const Dashboard = () => {
         </Card>
 
         {/* Core Analytics Dashboard */}
-        <Card className="border-lavender/20">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <ChartBar className="w-5 h-5 text-coral" />
-                Core Analytics Dashboard
-              </CardTitle>
-              <div className="flex gap-2">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
-                      <Maximize className="w-4 h-4 mr-1" />
-                      Full Screen
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
-                    <DialogHeader className="absolute top-4 left-4 z-50 bg-background/90 backdrop-blur-sm rounded-lg p-3 border">
-                      <DialogTitle className="text-sm font-medium">PowerBI Analytics Dashboard</DialogTitle>
-                    </DialogHeader>
-                    <div className="w-full h-full overflow-hidden">
-                      <iframe
-                        src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
-                        frameBorder="0"
-                        allowFullScreen={true}
-                        className="w-full h-full"
-                        title="Power BI Dashboard - Full Screen"
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
-                  <Settings className="w-4 h-4 mr-1" />
-                  Configure
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="relative w-full h-64 border-2 border-dashed border-coral/25 rounded-lg bg-coral/5 overflow-hidden group hover:border-coral/40 transition-colors">
-              <iframe
-                src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
-                frameBorder="0"
-                allowFullScreen={true}
-                className="absolute top-0 left-0 w-full h-full rounded-lg transition-opacity group-hover:opacity-90"
-                title="Power BI Dashboard"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-coral/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            </div>
-          </CardContent>
-        </Card>
+        <PowerBICard 
+          title="Core Analytics Dashboard"
+          embedUrl="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
+          className="h-full"
+        />
       </div>
 
       {/* Quick Navigation */}

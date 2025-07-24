@@ -18,59 +18,75 @@ const PowerBICard = ({
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   return (
-    <Card className={`border-lavender/20 ${className}`}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <ChartBar className="w-5 h-5 text-coral" />
-            {title}
+    <Card className={`border-lavender/20 overflow-hidden ${className}`}>
+      <CardHeader className="flex-none">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="flex items-center gap-2 min-w-0 flex-1">
+            <ChartBar className="w-5 h-5 text-coral flex-none" />
+            <span className="truncate">{title}</span>
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-none">
             <Dialog open={isFullScreen} onOpenChange={setIsFullScreen}>
               <DialogTrigger asChild>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="border-coral/20 text-coral hover:bg-coral/5 transition-all hover:scale-105"
+                  className="border-coral/20 text-coral hover:bg-coral/5 transition-all hover:scale-105 flex-none"
                 >
-                  <Maximize className="w-4 h-4 mr-1" />
-                  Full Screen
+                  <Maximize className="w-4 h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Full Screen</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
-                <DialogHeader className="absolute top-4 left-4 z-50 bg-background/90 backdrop-blur-sm rounded-lg p-3 border">
-                  <DialogTitle className="text-coral">{title} - Full Screen</DialogTitle>
+              <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none overflow-hidden">
+                <DialogHeader className="absolute top-2 left-2 sm:top-4 sm:left-4 z-50 bg-background/95 backdrop-blur-sm rounded-lg p-2 sm:p-3 border shadow-lg">
+                  <DialogTitle className="text-coral text-sm sm:text-base">{title} - Full Screen</DialogTitle>
                 </DialogHeader>
-                <div className="w-full h-full">
+                <div className="w-full h-full overflow-hidden">
                   <iframe
                     src={embedUrl}
                     width="100%"
                     height="100%"
                     frameBorder="0"
                     allowFullScreen
-                    className="w-full h-full"
+                    className="w-full h-full border-0"
                     title={`${title} Full Screen`}
+                    style={{ 
+                      minHeight: '100vh', 
+                      minWidth: '100vw',
+                      overflow: 'hidden'
+                    }}
                   />
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" size="sm" className="border-mint/20 text-mint hover:bg-mint/5">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-mint/20 text-mint hover:bg-mint/5 flex-none"
+            >
               <Settings className="w-4 h-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="h-96 rounded-lg overflow-hidden bg-gradient-to-br from-coral/5 to-mint/5 border border-border/20">
+      <CardContent className="p-0 flex-1">
+        <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden bg-gradient-to-br from-coral/5 to-mint/5 border border-border/20">
           <iframe
             src={embedUrl}
             width="100%"
             height="100%"
             frameBorder="0"
             allowFullScreen
-            className="w-full h-full rounded-lg"
+            className="absolute inset-0 w-full h-full rounded-lg border-0"
             title={title}
+            style={{ 
+              maxWidth: '100%',
+              maxHeight: '100%',
+              overflow: 'hidden'
+            }}
           />
+          {/* Loading overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-coral/10 to-mint/10 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-none" />
         </div>
       </CardContent>
     </Card>
