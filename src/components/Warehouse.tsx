@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { ChartBar, Filter, TrendingUp, Settings } from "lucide-react";
+import { ChartBar, Filter, TrendingUp, Settings, Maximize } from "lucide-react";
 
 const Warehouse = () => {
   const [filters, setFilters] = useState({
@@ -127,38 +127,73 @@ const Warehouse = () => {
       {/* Power BI Dashboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {mockDashboards.map((dashboard, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow border-coral/20">
-            <CardHeader>
+          <Card key={index} className="relative overflow-hidden group transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 border-coral/30 hover:border-coral/50 bg-gradient-to-br from-coral/10 to-coral-glow/20 backdrop-blur-sm shadow-lg hover:shadow-2xl hover:shadow-coral/25">
+            {/* Animated gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-coral/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+            
+            {/* Glowing border effect */}
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-coral/20 via-coral/40 to-coral/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+            
+            <CardHeader className="relative z-10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <ChartBar className="w-5 h-5 text-coral" />
+                  <ChartBar className="w-5 h-5 text-coral group-hover:scale-110 transition-transform" />
                   {dashboard.title}
                 </CardTitle>
-                <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
-                  <Settings className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
+                        <Maximize className="w-4 h-4 mr-1" />
+                        Full Screen
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
+                      <DialogHeader className="absolute top-4 left-4 z-50 bg-background/90 backdrop-blur-sm rounded-lg p-3 border">
+                        <DialogTitle className="text-sm font-medium">{dashboard.title} - Full Screen</DialogTitle>
+                      </DialogHeader>
+                      <div className="w-full h-full overflow-hidden">
+                        <iframe
+                          src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
+                          frameBorder="0"
+                          allowFullScreen={true}
+                          className="w-full h-full"
+                          title={`${dashboard.title} Dashboard - Full Screen`}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">{dashboard.description}</p>
+              <p className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{dashboard.description}</p>
             </CardHeader>
-            <CardContent>
-              <div className="relative w-full h-64 border-2 border-dashed border-coral/25 rounded-lg bg-coral/5 overflow-hidden">
+            <CardContent className="relative z-10">
+              <div className="relative w-full h-64 border-2 border-dashed border-coral/25 rounded-lg bg-coral/5 overflow-hidden group/iframe hover:border-coral/40 transition-colors">
                 <iframe
                   src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
                   frameBorder="0"
                   allowFullScreen={true}
-                  className="absolute top-0 left-0 w-full h-full rounded-lg"
+                  className="absolute top-0 left-0 w-full h-full rounded-lg transition-opacity group-hover/iframe:opacity-90"
                   title={`${dashboard.title} Dashboard`}
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-coral/10 to-transparent opacity-0 group-hover/iframe:opacity-100 transition-opacity pointer-events-none" />
               </div>
               <div className="mt-4 flex justify-between items-center">
-                <Button variant="outline" size="sm" className="border-mint/20 text-mint hover:bg-mint/10">
-                  Full Screen
-                </Button>
+                <div className="flex gap-2">
+                  <span className={`inline-block w-2 h-2 rounded-full bg-mint animate-pulse`} />
+                  <span className="text-xs font-medium text-mint">Live Data</span>
+                </div>
                 <div className="text-xs text-muted-foreground">
                   Last updated: {dashboard.lastUpdated}
                 </div>
               </div>
             </CardContent>
+            
+            {/* Subtle glow effect on hover */}
+            <div className="absolute inset-0 rounded-lg bg-coral/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           </Card>
         ))}
       </div>
