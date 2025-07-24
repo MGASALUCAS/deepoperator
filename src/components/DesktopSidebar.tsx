@@ -146,7 +146,7 @@ const DesktopSidebar = ({ activeSection, setActiveSection }: DesktopSidebarProps
         <div className="text-center">
           <div className="w-full h-2 bg-gradient-to-r from-coral via-mint to-violet rounded-full mb-3 shadow-magical"></div>
           <p className="text-xs text-muted-foreground">
-            Emotional Intelligence Platform
+           Business Intelligence Platform
           </p>
         </div>
       </div>
