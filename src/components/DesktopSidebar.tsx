@@ -84,7 +84,7 @@ const DesktopSidebar = ({ activeSection, setActiveSection }: DesktopSidebarProps
             <h1 className="font-display font-bold text-xl text-foreground">
               Deep Operator
             </h1>
-            <p className="text-sm text-muted-foreground">Revolutionary Analytics</p>
+            {/* <p className="text-sm text-muted-foreground">Revolutionary Analytics</p> */}
           </div>
         </motion.div>
       </div>

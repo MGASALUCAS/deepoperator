@@ -186,7 +186,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
                 <h1 className="font-display font-bold text-xl text-foreground">
                   Operator Engine
                 </h1>
-                <p className="text-sm text-muted-foreground">Revolutionary Analytics</p>
+                {/* <p className="text-sm text-muted-foreground">Revolutionary Analytics</p> */}
               </div>
             </motion.div>
 
