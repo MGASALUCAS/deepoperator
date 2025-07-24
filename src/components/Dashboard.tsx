@@ -93,9 +93,9 @@ const Dashboard = () => {
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground">
             Operation Dashboard
           </h1>
-          <p className="text-lg text-muted-foreground">
+          {/* <p className="text-lg text-muted-foreground">
             Real-time insights powered by emotional intelligence
-          </p>
+          </p> */}
         </div>
         <Button variant="hero" size="lg" className="w-full lg:w-auto group">
           <Bell className="w-5 h-5 group-hover:rotate-12 transition-transform" />
