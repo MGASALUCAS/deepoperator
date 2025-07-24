@@ -1,7 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { ChartBar, TrendingUp, Users, Bell, Settings } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { ChartBar, TrendingUp, Users, Bell, Settings, Maximize } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 interface MetricData {
@@ -45,27 +46,36 @@ const Dashboard = () => {
   }, []);
 
   const stats = [
-    { endpointNum: 100, color: "coral" },
-    { endpointNum: 200, color: "mint" },
-    { endpointNum: 300, color: "violet" },
-    { endpointNum: 400, color: "gold" },
-    { endpointNum: 1, color: "coral" },
-    { endpointNum: 2, color: "mint" },
-    { endpointNum: 3, color: "violet" },
-    { endpointNum: 4, color: "gold" },
-    { endpointNum: 5, color: "coral" },
-    { endpointNum: 6, color: "mint" },
-    { endpointNum: 7, color: "violet" },
-    { endpointNum: 8, color: "gold" },
-    { endpointNum: 9, color: "coral" },
-    { endpointNum: 10, color: "mint" },
-    { endpointNum: 11, color: "violet" },
-    { endpointNum: 12, color: "gold" },
-    { endpointNum: 13, color: "coral" },
-    { endpointNum: 14, color: "mint" },
-    { endpointNum: 15, color: "violet" },
-    { endpointNum: 16, color: "gold" }
+    { endpointNum: 100, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 200, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    { endpointNum: 300, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    { endpointNum: 400, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    { endpointNum: 1, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 2, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    { endpointNum: 3, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    { endpointNum: 4, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    { endpointNum: 5, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 6, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    { endpointNum: 7, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    { endpointNum: 8, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    { endpointNum: 9, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 10, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    { endpointNum: 11, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    { endpointNum: 12, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    { endpointNum: 13, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 14, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    { endpointNum: 15, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    { endpointNum: 16, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" }
   ];
+
+  const getMetricCardStyle = (color: string, gradient: string, shadowColor: string) => {
+    const baseClasses = "relative overflow-hidden group transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1";
+    const borderClasses = `border border-${color}/30 hover:border-${color}/50`;
+    const backgroundClasses = `bg-gradient-to-br ${gradient} backdrop-blur-sm`;
+    const shadowClasses = `shadow-lg hover:shadow-2xl hover:shadow-${shadowColor}/25`;
+    
+    return `${baseClasses} ${borderClasses} ${backgroundClasses} ${shadowClasses}`;
+  };
 
   const userLevels = [
     { level: 0, count: 245, percentage: 16.3 },
@@ -102,17 +112,31 @@ const Dashboard = () => {
           const displayDescription = loading ? "" : (metricData?.description || "Real-time data");
           
           return (
-            <Card key={index} className="bg-card border border-border/50 hover:border-border transition-colors group">
-              <CardContent className="p-3 md:p-4 lg:p-6 text-center">
-                <div className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-display font-bold text-foreground mb-1 md:mb-2 group-hover:scale-105 transition-transform">
+            <Card key={index} className={getMetricCardStyle(stat.color, stat.gradient, stat.shadowColor)}>
+              {/* Animated gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-${stat.color}/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out`} />
+              
+              {/* Glowing border effect */}
+              <div className={`absolute inset-0 rounded-lg bg-gradient-to-r from-${stat.color}/20 via-${stat.color}/40 to-${stat.color}/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm`} />
+              
+              <CardContent className="relative p-3 md:p-4 lg:p-6 text-center z-10">
+                {/* Floating icon */}
+                <div className={`absolute top-2 right-2 w-6 h-6 rounded-full bg-${stat.color}/20 flex items-center justify-center opacity-60 group-hover:opacity-100 transition-opacity`}>
+                  <div className={`w-2 h-2 rounded-full bg-${stat.color} animate-pulse`} />
+                </div>
+
+                <div className={`text-xl md:text-2xl lg:text-3xl xl:text-4xl font-display font-bold text-${stat.color} mb-1 md:mb-2 group-hover:scale-110 transition-all duration-300 drop-shadow-sm`}>
                   {displayValue}
                 </div>
-                <p className="text-xs md:text-sm font-medium text-muted-foreground line-clamp-2">
+                <p className="text-xs md:text-sm font-medium text-foreground/90 line-clamp-2 group-hover:text-foreground transition-colors">
                   {displayTitle}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-1 hidden md:block line-clamp-2">
                   {displayDescription}
                 </p>
+
+                {/* Subtle glow effect on hover */}
+                <div className={`absolute inset-0 rounded-lg bg-${stat.color}/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
               </CardContent>
             </Card>
           );
@@ -164,21 +188,46 @@ const Dashboard = () => {
                 <ChartBar className="w-5 h-5 text-coral" />
                 Core Analytics Dashboard
               </CardTitle>
-              <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
-                <Settings className="w-4 h-4 mr-1" />
-                Configure
-              </Button>
+              <div className="flex gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
+                      <Maximize className="w-4 h-4 mr-1" />
+                      Full Screen
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
+                    <DialogHeader className="absolute top-4 left-4 z-50 bg-background/90 backdrop-blur-sm rounded-lg p-3 border">
+                      <DialogTitle className="text-sm font-medium">PowerBI Analytics Dashboard</DialogTitle>
+                    </DialogHeader>
+                    <div className="w-full h-full overflow-hidden">
+                      <iframe
+                        src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
+                        frameBorder="0"
+                        allowFullScreen={true}
+                        className="w-full h-full"
+                        title="Power BI Dashboard - Full Screen"
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5">
+                  <Settings className="w-4 h-4 mr-1" />
+                  Configure
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="relative w-full h-64 border-2 border-dashed border-coral/25 rounded-lg bg-coral/5 overflow-hidden">
+            <div className="relative w-full h-64 border-2 border-dashed border-coral/25 rounded-lg bg-coral/5 overflow-hidden group hover:border-coral/40 transition-colors">
               <iframe
                 src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
                 frameBorder="0"
                 allowFullScreen={true}
-                className="absolute top-0 left-0 w-full h-full rounded-lg"
+                className="absolute top-0 left-0 w-full h-full rounded-lg transition-opacity group-hover:opacity-90"
                 title="Power BI Dashboard"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-coral/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             </div>
           </CardContent>
         </Card>
@@ -196,9 +245,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-tangerine/20 hover:border-tangerine/40">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-gold/20 hover:border-gold/40">
           <CardContent className="p-6 text-center">
-            <Bell className="w-8 h-8 mx-auto mb-3 text-tangerine" />
+            <Bell className="w-8 h-8 mx-auto mb-3 text-gold" />
             <h3 className="font-semibold mb-2">Operator Panel</h3>
             <p className="text-sm text-muted-foreground">
               Automate notifications & engagement
@@ -206,9 +255,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-lavender/30 hover:border-lavender/50">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-violet/30 hover:border-violet/50">
           <CardContent className="p-6 text-center">
-            <TrendingUp className="w-8 h-8 mx-auto mb-3 text-lavender" />
+            <TrendingUp className="w-8 h-8 mx-auto mb-3 text-violet" />
             <h3 className="font-semibold mb-2">Feedback Loop</h3>
             <p className="text-sm text-muted-foreground">
               Sentiment analysis & insights
