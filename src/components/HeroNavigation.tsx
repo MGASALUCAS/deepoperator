@@ -46,7 +46,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
       id: "warehouse",
       label: "Warehouse",
       icon: Database,
-      description: "Analytics Engine",
+      description: "Analytics Hub",
       color: "mint",
       gradient: "from-mint to-mint-light"
     },
@@ -54,7 +54,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
       id: "operator",
       label: "Operator",
       icon: Bell,
-      description: "Automation Suite",
+      description: "Automation Hub",
       color: "violet",
       gradient: "from-violet to-violet-light"
     },
@@ -62,7 +62,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
       id: "feedback",
       label: "Feedback",
       icon: MessageCircle,
-      description: "Emotional Intelligence",
+      description: "Emotional Hub",
       color: "gold",
       gradient: "from-gold to-gold-light"
     },
