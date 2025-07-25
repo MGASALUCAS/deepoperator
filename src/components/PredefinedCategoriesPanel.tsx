@@ -1,115 +1,157 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
-import { Edit, Plus, ChevronDown, Save, Loader2 } from "lucide-react";
-import { useReminders, type PredefinedCategory } from "@/hooks/useReminders";
+import { Edit, Plus, ChevronDown, Save } from "lucide-react";
 
-export type { PredefinedCategory };
+// Hardcoded sample in Kiswahili as reference (Excel-backed in real app)
+const initialCategories = [
+  {
+    id: "alert",
+    name: "Alert",
+    icon: "message-circle",
+    messages: [
+      {
+        id: 1,
+        title: "Website yako Binafsi",
+        content:
+          "Duka Mtandao ni kama website yako binafsi. Ni moja ya feature muhimu sana kwenye Kuza — tumia kuitangaza biashara yako.",
+      },
+      {
+        id: 2,
+        title: "Boresha Duka Mtandao",
+        content:
+          "Duka Mtandao ni lango la kwanza kwa wateja. Picha bora hujenga imani na kuuza zaidi — hakikisha zinaonyesha bidhaa zako kwa ubora na unawashirikisha.",
+      },
+    ],
+  },
+  {
+    id: "duka",
+    name: "Duka Mtandao",
+    icon: "message-circle",
+    messages: [
+      {
+        id: 1,
+        title: "Washirikishe Wateja",
+        content:
+          "Kila duka linahitaji wateja. Share link ya duka lako leo — fursa inaanza na hatua moja.",
+      },
+      {
+        id: 2,
+        title: "Okoa Muda",
+        content:
+          "Badala ya kujibu maswali mengi kila siku, share duka lako. Mteja ataona kila kitu papo hapo.",
+      },
+    ],
+  },
+  {
+    id: "info",
+    name: "Information",
+    icon: "message-circle",
+    messages: [
+      {
+        id: 1,
+        title: "Chapa Yako Mtandaoni",
+        content:
+          "Duka Mtandao si sehemu tu ya bidhaa — ni chapa yako. Litengeneze vizuri. Litumie kwa ufanisi.",
+      },
+    ],
+  },
+  {
+    id: "mauzo",
+    name: "Mauzo",
+    icon: "message-circle",
+    messages: [],
+  },
+  {
+    id: "weekly",
+    name: "Weekly",
+    icon: "message-circle",
+    messages: [],
+  },
+];
+
+export interface PredefinedCategory {
+  id: string;
+  name: string;
+  icon: string;
+  messages: { id: number; title: string; content: string }[];
+}
 
 export default function PredefinedCategoriesPanel() {
-  const { 
-    categories, 
-    loading, 
-    addReminder, 
-    updateReminder, 
-    addCategory 
-  } = useReminders();
-
-  const [activeCatId, setActiveCatId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<PredefinedCategory[]>(initialCategories);
+  const [activeCatId, setActiveCatId] = useState<string | null>(
+    categories.length > 0 ? categories[0].id : null
+  );
   const [newMessage, setNewMessage] = useState<{ title: string; content: string }>({
     title: "",
     content: "",
   });
-  const [editing, setEditing] = useState<{ catId: string; msgId: number; reminderId?: string } | null>(null);
+  const [editing, setEditing] = useState<{ catId: string; msgId: number } | null>(null);
   const [editValues, setEditValues] = useState<{ title: string; content: string }>({ title: "", content: "" });
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "" });
-  const [submitting, setSubmitting] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: "", id: "" });
 
-  // Set initial active category when categories load
-  useEffect(() => {
-    if (categories.length > 0 && !activeCatId) {
-      setActiveCatId(categories[0].id);
-    }
-  }, [categories, activeCatId]);
-
-  // Add message with Excel sync
-  const handleAddMessage = async (catId: string) => {
+  // Add message
+  const handleAddMessage = (catId: string) => {
     if (!newMessage.title.trim() || !newMessage.content.trim()) return;
-    
-    setSubmitting(true);
-    try {
-      const category = categories.find(c => c.id === catId);
-      if (category) {
-        await addReminder(category.name, newMessage.title, newMessage.content);
-        setNewMessage({ title: "", content: "" });
-      }
-    } catch (error) {
-      console.error('Failed to add message:', error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Edit message with Excel sync
-  const handleEditMessage = async (catId: string, msgId: number) => {
-    if (!editing?.reminderId) return;
-    
-    setSubmitting(true);
-    try {
-      await updateReminder(editing.reminderId, editValues.title, editValues.content);
-      setEditing(null);
-    } catch (error) {
-      console.error('Failed to update message:', error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Add new category with Excel sync
-  const handleAddCategory = async () => {
-    if (!newCategory.name.trim()) return;
-    
-    setSubmitting(true);
-    try {
-      await addCategory(newCategory.name);
-      setShowAddCategory(false);
-      setNewCategory({ name: "" });
-    } catch (error) {
-      console.error('Failed to add category:', error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <section className="mb-6">
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="w-8 h-8 animate-spin text-coral" />
-          <span className="ml-2 text-muted-foreground">Loading Excel data...</span>
-        </div>
-      </section>
+    setCategories((c) =>
+      c.map((cat) =>
+        cat.id === catId
+          ? {
+              ...cat,
+              messages: [
+                ...cat.messages,
+                { id: Date.now(), title: newMessage.title, content: newMessage.content },
+              ],
+            }
+          : cat
+      )
     );
-  }
+    setNewMessage({ title: "", content: "" });
+  };
+
+  // Edit message
+  const handleEditMessage = (catId: string, msgId: number) => {
+    setCategories((c) =>
+      c.map((cat) =>
+        cat.id === catId
+          ? {
+              ...cat,
+              messages: cat.messages.map((msg) =>
+                msg.id === msgId
+                  ? { ...msg, title: editValues.title, content: editValues.content }
+                  : msg
+              ),
+            }
+          : cat
+      )
+    );
+    setEditing(null);
+  };
+
+  // Add new category
+  const handleAddCategory = () => {
+    if (!newCategory.name.trim() || !newCategory.id.trim()) return;
+    setCategories([
+      ...categories,
+      { id: newCategory.id, name: newCategory.name, icon: "message-circle", messages: [] },
+    ]);
+    setShowAddCategory(false);
+    setNewCategory({ name: "", id: "" });
+  };
 
   return (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3 flex-wrap">
-        <h2 className="text-xl font-bold text-coral">Excel-Synced Categories</h2>
+        <h2 className="text-xl font-bold text-coral">Predefined Categories</h2>
         <Button
           variant="outline"
           size="sm"
           className="border-coral text-coral"
           onClick={() => setShowAddCategory(true)}
-          disabled={submitting}
         >
-          {submitting ? (
-            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-          ) : (
-            <Plus className="w-4 h-4 mr-1" />
-          )}
+          <Plus className="w-4 h-4 mr-1" />
           New Category
         </Button>
       </div>
@@ -176,7 +218,6 @@ export default function PredefinedCategoriesPanel() {
                                 title: e.target.value,
                               }))
                             }
-                            disabled={submitting}
                           />
                           <textarea
                             className="border p-2 rounded"
@@ -187,27 +228,20 @@ export default function PredefinedCategoriesPanel() {
                                 content: e.target.value,
                               }))
                             }
-                            disabled={submitting}
                           />
                           <div className="flex gap-2">
                             <Button
                               size="sm"
                               className="bg-mint"
                               onClick={() => handleEditMessage(cat.id, msg.id)}
-                              disabled={submitting}
                             >
-                              {submitting ? (
-                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                              ) : (
-                                <Save className="w-4 h-4 mr-1" />
-                              )}
+                              <Save className="w-4 h-4 mr-1" />
                               Save
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => setEditing(null)}
-                              disabled={submitting}
                             >
                               Cancel
                             </Button>
@@ -227,14 +261,12 @@ export default function PredefinedCategoriesPanel() {
                                 setEditing({
                                   catId: cat.id,
                                   msgId: msg.id,
-                                  reminderId: `${cat.name.toLowerCase().replace(/\s+/g, '_')}_${msg.id}`
                                 });
                                 setEditValues({
                                   title: msg.title,
                                   content: msg.content,
                                 });
                               }}
-                              disabled={submitting}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -269,14 +301,8 @@ export default function PredefinedCategoriesPanel() {
                       size="sm"
                       className="bg-coral text-white"
                       onClick={() => handleAddMessage(cat.id)}
-                      disabled={submitting}
                     >
-                      {submitting ? (
-                        <Loader2 className="mr-1 w-4 h-4 animate-spin" />
-                      ) : (
-                        <Plus className="mr-1 w-4 h-4" />
-                      )}
-                      Add Message
+                      <Plus className="mr-1 w-4 h-4" /> Add Message
                     </Button>
                   </div>
                 </div>
@@ -290,33 +316,33 @@ export default function PredefinedCategoriesPanel() {
           <div className="bg-white rounded-xl p-6 w-full max-w-xs shadow-2xl space-y-4">
             <h3 className="font-bold text-lg mb-2 text-coral">Add New Category</h3>
             <input
+              className="border rounded px-3 py-2 w-full mb-2"
+              placeholder="Category id (unique, e.g., weekly)"
+              value={newCategory.id}
+              onChange={(e) =>
+                setNewCategory((cat) => ({ ...cat, id: e.target.value }))
+              }
+            />
+            <input
               className="border rounded px-3 py-2 w-full"
               placeholder="Category Name"
               value={newCategory.name}
               onChange={(e) =>
                 setNewCategory((cat) => ({ ...cat, name: e.target.value }))
               }
-              disabled={submitting}
             />
             <div className="flex justify-end gap-2">
               <Button
                 size="sm"
                 className="bg-mint text-white"
                 onClick={handleAddCategory}
-                disabled={submitting}
               >
-                {submitting ? (
-                  <Loader2 className="mr-1 w-4 h-4 animate-spin" />
-                ) : (
-                  <Plus className="mr-1 w-4 h-4" />
-                )}
-                Save
+                <Plus className="mr-1 w-4 h-4" /> Save
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setShowAddCategory(false)}
-                disabled={submitting}
               >
                 Cancel
               </Button>

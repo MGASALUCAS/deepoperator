@@ -6,12 +6,11 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { Badge } from "./ui/badge";
-import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
+import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown } from "lucide-react";
 import CategoryManager from "./CategoryManager";
 import MessageCategoriesPanel, { MessageCategory } from "./MessageCategoriesPanel";
 import PredefinedCategoriesPanel from "./PredefinedCategoriesPanel";
 import AutomationRulesPanel, { AutomationRule } from "./AutomationRulesPanel";
-import { useReminders } from "@/hooks/useReminders";
 
 const initialCategories: MessageCategory[] = [
   {
@@ -88,44 +87,28 @@ const initialRules: AutomationRule[] = [
 const OperatorPanel = () => {
   const [categories, setCategories] = useState<MessageCategory[]>(initialCategories);
   const [activeRule, setActiveRule] = useState(null);
-  
-  const { 
-    automationRules, 
-    loading,
-    toggleAutomationRule,
-    getSmartMessageSelection 
-  } = useReminders();
+  const [automationRules, setAutomationRules] = useState<AutomationRule[]>(initialRules);
 
   // --- Rules handlers for the AutomationRulesPanel ---
-  const handleToggleRule = async (id: number, newStatus: "active" | "paused") => {
-    try {
-      await toggleAutomationRule(String(id), newStatus);
-      
-      // If activating a rule, demonstrate smart message selection
-      if (newStatus === 'active') {
-        const rule = automationRules.find(r => r.id === id);
-        if (rule) {
-          try {
-            const smartSelection = await getSmartMessageSelection(String(id), rule.category);
-            console.log('Smart message selected:', smartSelection);
-          } catch (error) {
-            console.log('No messages available for smart selection:', error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to toggle rule:', error);
-    }
+  const handleToggleRule = (id: number, newStatus: "active" | "paused") => {
+    setAutomationRules(rules =>
+      rules.map(rule =>
+        rule.id === id ? { ...rule, status: newStatus } : rule
+      )
+    );
   };
 
   const handleEditRule = (updatedRule: AutomationRule) => {
-    // This would need to be implemented with a backend update
-    console.log('Edit rule:', updatedRule);
+    setAutomationRules(rules =>
+      rules.map(rule => rule.id === updatedRule.id ? updatedRule : rule)
+    );
   };
 
   const handleAddRule = (newRule: Omit<AutomationRule, "id">) => {
-    // This would need to be implemented with a backend insert
-    console.log('Add rule:', newRule);
+    setAutomationRules(rules => [
+      ...rules,
+      { ...newRule, id: Date.now() }
+    ]);
   };
 
   // Add new category
@@ -192,17 +175,6 @@ const OperatorPanel = () => {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="w-8 h-8 animate-spin text-coral" />
-          <span className="ml-2 text-muted-foreground">Loading Excel-synced data...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       {/* Predefined Categories section - top priority */}
@@ -210,9 +182,9 @@ const OperatorPanel = () => {
       {/* Professional Operator Panel Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#FF6B6B" }}>Smart Operator Panel</h1>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#FF6B6B" }}>Operator Panel</h1>
           <p className="text-muted-foreground">
-            Excel-synced notification automation with intelligent message selection
+            Intelligent notification automation and engagement engine
           </p>
         </div>
       </div>
