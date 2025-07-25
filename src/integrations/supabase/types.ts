@@ -82,7 +82,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_automation_rules: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          trigger_condition: string
+          action: string
+          status: string
+          category: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          reminder_id: string
+          category: string
+          title: string
+          message: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_reminders_by_category: {
+        Args: { category_name: string }
+        Returns: {
+          id: string
+          reminder_id: string
+          category: string
+          title: string
+          message: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
