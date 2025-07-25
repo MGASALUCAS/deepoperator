@@ -46,10 +46,10 @@ const Dashboard = () => {
   }, []);
 
   const stats = [
-    { endpointNum: 100, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
-    { endpointNum: 200, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
-    { endpointNum: 300, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
-    { endpointNum: 400, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    { endpointNum: 17, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 18, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    { endpointNum: 19, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    { endpointNum: 20, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
     { endpointNum: 1, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
     { endpointNum: 2, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
     { endpointNum: 3, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
