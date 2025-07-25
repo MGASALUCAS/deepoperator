@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      automation_rules: {
+        Row: {
+          action: string
+          category: string
+          created_at: string
+          id: string
+          name: string
+          status: string
+          trigger_condition: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          trigger_condition: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          trigger_condition?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reminders: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          reminder_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          reminder_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          reminder_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
