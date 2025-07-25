@@ -19,7 +19,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchAllMetrics = async () => {
-      const endpoints = Array.from({length: 16}, (_, i) => i + 1);
+      const endpoints = Array.from({length: 24}, (_, i) => i + 1);
       const promises = endpoints.map(async (endpointNum) => {
         try {
           const response = await fetch(`http://localhost:4900/api/end${endpointNum}`);
