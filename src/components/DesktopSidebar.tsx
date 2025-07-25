@@ -29,7 +29,7 @@ const DesktopSidebar = ({ activeSection, setActiveSection }: DesktopSidebarProps
       id: "warehouse",
       label: "Warehouse",
       icon: Database,
-      description: "Analytics Engine",
+      description: "Analytics Hub",
       color: "mint",
       gradient: "from-mint to-mint-light"
     },
@@ -37,7 +37,7 @@ const DesktopSidebar = ({ activeSection, setActiveSection }: DesktopSidebarProps
       id: "operator",
       label: "Operator",
       icon: Bell,
-      description: "Automation Suite",
+      description: "Automation Hub",
       color: "violet",
       gradient: "from-violet to-violet-light"
     },
@@ -45,7 +45,7 @@ const DesktopSidebar = ({ activeSection, setActiveSection }: DesktopSidebarProps
       id: "feedback",
       label: "Feedback",
       icon: MessageCircle,
-      description: "Emotional Intelligence",
+      description: "Emotional Hub",
       color: "gold",
       gradient: "from-gold to-gold-light"
     },
