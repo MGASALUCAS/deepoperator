@@ -22,7 +22,7 @@ const Dashboard = () => {
       const endpoints = Array.from({length: 24}, (_, i) => i + 1);
       const promises = endpoints.map(async (endpointNum) => {
         try {
-          const response = await fetch(`http://localhost:4900/api/end${endpointNum}`);
+          const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
           const data = await response.json();
           return { endpointNum, data };
         } catch (error) {
