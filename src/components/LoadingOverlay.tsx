@@ -35,10 +35,10 @@ const LoadingOverlay = ({ isLoading }: LoadingOverlayProps) => {
   const CurrentIcon = phrases[currentPhrase].icon;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md transition-opacity duration-500 ${
+    <div className={`fixed inset-0 z-50 flex items-start justify-center bg-background/80 backdrop-blur-md transition-opacity duration-500 ${
       isLoading ? 'opacity-100' : 'opacity-0'
     }`}>
-      <div className="relative">
+      <div className="relative mt-16 sm:mt-20 md:mt-24">
         {/* Animated background glow */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-r from-coral/20 via-mint/20 to-violet/20 blur-3xl animate-pulse" />
         
