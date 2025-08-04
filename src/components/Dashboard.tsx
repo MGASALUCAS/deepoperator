@@ -19,10 +19,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchAllMetrics = async () => {
-      const endpoints = Array.from({length: 24}, (_, i) => i + 1);
+      const endpoints = Array.from({length: 30}, (_, i) => i + 1);
       const promises = endpoints.map(async (endpointNum) => {
         try {
-          const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
+          const response = await fetch(`http://127.0.0.1:4900/api/end${endpointNum}`);
+                    // const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
+
           const data = await response.json();
           return { endpointNum, data };
         } catch (error) {
@@ -50,6 +52,14 @@ const Dashboard = () => {
     { endpointNum: 18, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
     { endpointNum: 19, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
     { endpointNum: 20, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    { endpointNum: 21, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 22, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    { endpointNum: 23, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    { endpointNum: 24, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    { endpointNum: 25, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    { endpointNum: 26, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    // { endpointNum: 27, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    // { endpointNum: 28, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
     { endpointNum: 1, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
     { endpointNum: 2, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
     { endpointNum: 3, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
@@ -60,12 +70,12 @@ const Dashboard = () => {
     { endpointNum: 8, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
     { endpointNum: 9, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
     { endpointNum: 10, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
-    { endpointNum: 11, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
-    { endpointNum: 12, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
-    { endpointNum: 13, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
-    { endpointNum: 14, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
-    { endpointNum: 15, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
-    { endpointNum: 16, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" }
+    // { endpointNum: 11, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    // { endpointNum: 12, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" },
+    // { endpointNum: 13, color: "coral", gradient: "from-coral/20 to-coral-glow/30", shadowColor: "coral" },
+    // { endpointNum: 14, color: "mint", gradient: "from-mint/20 to-mint-glow/30", shadowColor: "mint" },
+    // { endpointNum: 15, color: "violet", gradient: "from-violet/20 to-violet-glow/30", shadowColor: "violet" },
+    // { endpointNum: 16, color: "gold", gradient: "from-gold/20 to-gold-glow/30", shadowColor: "gold" }
   ];
 
   const getMetricCardStyle = (color: string, gradient: string, shadowColor: string) => {
@@ -107,9 +117,14 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
         {stats.map((stat, index) => {
           const metricData = metricsData[stat.endpointNum];
-          const displayValue = loading ? "Loading..." : (metricData?.value || "N/A");
+          // const displayValue = loading ? "Loading..." : (metricData?.value || "N/A");
+          const displayValue = loading ? "Loading..."  : (metricData && metricData.value !== undefined && metricData.value !== null) ? metricData.value : "N/A";  
           const displayTitle = loading ? "Loading..." : (metricData?.metric || `Metric ${stat.endpointNum}`);
           const displayDescription = loading ? "" : (metricData?.description || "Real-time data");
+          
+          // const displayValue = loading ? "Loading..."  : (metricData && metricData.value !== undefined && metricData.value !== null) ? metricData.value : "N/A";  
+          // const displayTitle = loading ? "Loading..." : (metricData?.metric || `Metric ${stat.endpointNum}`);
+          // const displayDescription = loading ? "" : (metricData?.description || "Real-time data");
           
           return (
             <Card key={index} className={getMetricCardStyle(stat.color, stat.gradient, stat.shadowColor)}>
