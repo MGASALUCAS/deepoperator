@@ -194,6 +194,8 @@ const OperatorPanel = () => {
               ),
             }
           : cat
+
+          
       )
     );
   };
