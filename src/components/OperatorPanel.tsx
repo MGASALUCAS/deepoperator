@@ -6,11 +6,12 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { Badge } from "./ui/badge";
-import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Send } from "lucide-react";
 import CategoryManager from "./CategoryManager";
 import MessageCategoriesPanel, { MessageCategory } from "./MessageCategoriesPanel";
 import PredefinedCategoriesPanel from "./PredefinedCategoriesPanel";
 import AutomationRulesPanel, { AutomationRule } from "./AutomationRulesPanel";
+import { useToast } from "@/hooks/use-toast";
 
 const initialCategories: MessageCategory[] = [
   {
@@ -85,10 +86,11 @@ const initialRules: AutomationRule[] = [
 ];
 
 const OperatorPanel = () => {
+  const { toast } = useToast();
   const [categories, setCategories] = useState<MessageCategory[]>(initialCategories);
   const [activeRule, setActiveRule] = useState(null);
   const [automationRules, setAutomationRules] = useState<AutomationRule[]>(initialRules);
-
+  const [isLoading, setIsLoading] = useState(false);
 
   const [notificationType, setNotificationType] = useState("push");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -147,34 +149,69 @@ const OperatorPanel = () => {
 
 
   const handleSend = async () => {
-  if (!selectedCategory || !messageTitle || !messageContent) {
-    alert("Please fill in all fields.");
-    return;
-  }
-
-  try {
-    const res = await fetch("http://127.0.0.1:5000/api/notify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        category: selectedCategory,
-        title: messageTitle,
-        body: messageContent,
-        notification_type: notificationType,
-      }),
-    });
-
-    const data = await res.json();
-    if (res.ok && data.success) {
-      alert(`✅ Notification sent to ${data.sent_to} users`);
-    } else {
-      alert(`⚠️ Error: ${data.error || "Unknown issue"}`);
+    if (!selectedCategory || !messageTitle || !messageContent) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all fields before sending.",
+        variant: "destructive"
+      });
+      return;
     }
-  } catch (error) {
-    console.error(error);
-    alert("🚨 Failed to send notification");
-  }
-};
+
+    setIsLoading(true);
+    
+    try {
+      const categoryMapping: { [key: string]: string } = {
+        "onboarding": "onboarding message",
+        "financial": "active subscribers", 
+        "engagement": "expiring soon",
+        "support": "active subscribers",
+        "marketing": "active subscribers",
+        "retention": "expiring soon"
+      };
+
+      const backendCategory = categoryMapping[selectedCategory] || selectedCategory;
+
+      const res = await fetch("http://127.0.0.1:5000/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: backendCategory,
+          title: messageTitle,
+          body: messageContent
+        }),
+      });
+
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        toast({
+          title: "Notification Sent Successfully! 🚀",
+          description: `Message delivered to ${data.sent_to} users in the ${selectedCategory} category.`,
+        });
+        
+        // Clear form
+        setMessageTitle("");
+        setMessageContent("");
+        setSelectedCategory("");
+      } else {
+        toast({
+          title: "Sending Failed",
+          description: data.error || "Unknown error occurred",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to notification service",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   // Edit existing message
@@ -267,13 +304,14 @@ const OperatorPanel = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.name} value={cat.name.toLowerCase()}>
-                          {cat.icon} {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                     <SelectContent>
+                       <SelectItem value="onboarding">👋 Onboarding (New Users)</SelectItem>
+                       <SelectItem value="financial">💰 Financial (Active Subscribers)</SelectItem>
+                       <SelectItem value="engagement">🎯 Engagement (Expiring Soon)</SelectItem>
+                       <SelectItem value="support">🛠️ Support (Active Subscribers)</SelectItem>
+                       <SelectItem value="marketing">📢 Marketing (Active Subscribers)</SelectItem>
+                       <SelectItem value="retention">💎 Retention (Expiring Soon)</SelectItem>
+                     </SelectContent>
                   </Select>
                 </div>
               </div>
@@ -289,9 +327,23 @@ const OperatorPanel = () => {
               </div>
               
               <div className="flex gap-2">
-                {/* <Button>Save Message</Button> */}
-                {/* <Button variant="outline">Save as Template</Button> */}
-                <Button >SEND</Button>
+                <Button 
+                  onClick={handleSend} 
+                  disabled={isLoading || !selectedCategory || !messageTitle || !messageContent}
+                  className="min-w-[120px]"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      SEND
+                    </>
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>

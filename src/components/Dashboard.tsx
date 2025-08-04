@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { ChartBar, TrendingUp, Users, Bell } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import PowerBICard from "./PowerBICard";
+import LoadingOverlay from "./LoadingOverlay";
 
 interface MetricData {
   metric: string;
@@ -97,8 +98,10 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+    <>
+      <LoadingOverlay isLoading={loading} />
+      <div className="space-y-8">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div className="space-y-2">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground">
             Operation Dashboard
@@ -236,6 +239,7 @@ const Dashboard = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 
