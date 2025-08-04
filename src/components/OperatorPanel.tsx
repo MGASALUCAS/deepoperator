@@ -89,6 +89,13 @@ const OperatorPanel = () => {
   const [activeRule, setActiveRule] = useState(null);
   const [automationRules, setAutomationRules] = useState<AutomationRule[]>(initialRules);
 
+
+  const [notificationType, setNotificationType] = useState("push");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [messageTitle, setMessageTitle] = useState("");
+  const [messageContent, setMessageContent] = useState("");
+
+
   // --- Rules handlers for the AutomationRulesPanel ---
   const handleToggleRule = (id: number, newStatus: "active" | "paused") => {
     setAutomationRules(rules =>
@@ -137,6 +144,38 @@ const OperatorPanel = () => {
       )
     );
   };
+
+
+  const handleSend = async () => {
+  if (!selectedCategory || !messageTitle || !messageContent) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://127.0.0.1:5000/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category: selectedCategory,
+        title: messageTitle,
+        body: messageContent,
+        notification_type: notificationType,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert(`✅ Notification sent to ${data.sent_to} users`);
+    } else {
+      alert(`⚠️ Error: ${data.error || "Unknown issue"}`);
+    }
+  } catch (error) {
+    console.error(error);
+    alert("🚨 Failed to send notification");
+  }
+};
+
 
   // Edit existing message
   const handleEditMessage = (
@@ -207,22 +246,22 @@ const OperatorPanel = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Notification Type</label>
-                  <Select>
+                  <Select value={notificationType} onValueChange={setNotificationType}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      {/* <SelectItem value="email">Email</SelectItem> */}
+                      {/* <SelectItem value="whatsapp">WhatsApp</SelectItem> */}
                       <SelectItem value="push">Push Notification</SelectItem>
-                      <SelectItem value="sms">SMS</SelectItem>
+                      {/* <SelectItem value="sms">SMS</SelectItem> */}
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div>
                   <label className="text-sm font-medium">Category</label>
-                  <Select>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -239,23 +278,26 @@ const OperatorPanel = () => {
               
               <div>
                 <label className="text-sm font-medium">Subject/Title</label>
-                <Input placeholder="Enter message title..." />
+                <Input value={messageTitle} onChange={(e) => setMessageTitle(e.target.value)} placeholder="Enter message title..." />
               </div>
               
               <div>
                 <label className="text-sm font-medium">Message Content</label>
-                <Textarea placeholder="Write your message..." rows={4} />
+                <Textarea value={messageContent} onChange={(e) => setMessageContent(e.target.value)} placeholder="Write your message..." rows={4} />
               </div>
               
               <div className="flex gap-2">
-                <Button>Preview Message</Button>
-                <Button variant="outline">Save as Template</Button>
-                <Button variant="outline">Test Send</Button>
+                {/* <Button>Save Message</Button> */}
+                {/* <Button variant="outline">Save as Template</Button> */}
+                <Button >SEND</Button>
               </div>
             </CardContent>
           </Card>
         </div>
         <div className="space-y-6">
+
+
+
           {/* AI Suggestions */}
           <Card>
             <CardHeader>
