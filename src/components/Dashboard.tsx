@@ -23,7 +23,7 @@ const Dashboard = () => {
       const endpoints = Array.from({length: 30}, (_, i) => i + 1);
       const promises = endpoints.map(async (endpointNum) => {
         try {
-          const response = await fetch(`http://127.0.0.1:4900/api/end${endpointNum}`);
+          const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
                     // const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
 
           const data = await response.json();
@@ -103,8 +103,8 @@ const Dashboard = () => {
       <div className="space-y-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground">
-            Operation Dashboard
+          <h1 className="text-lg md:text-xl lg:text-2xl font-display font-bold text-foreground">
+            Measure progress and impact of the efforts
           </h1>
           {/* <p className="text-lg text-muted-foreground">
             Real-time insights powered by emotional intelligence

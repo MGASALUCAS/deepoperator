@@ -172,7 +172,7 @@ const OperatorPanel = () => {
 
       const backendCategory = categoryMapping[selectedCategory] || selectedCategory;
 
-      const res = await fetch("http://127.0.0.1:5000/api/notify", {
+      const res = await fetch("http://54.153.108.186/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -306,11 +306,11 @@ const OperatorPanel = () => {
                     </SelectTrigger>
                      <SelectContent>
                        <SelectItem value="onboarding">👋 Onboarding (New Users)</SelectItem>
-                       <SelectItem value="financial">💰 Financial (Active Subscribers)</SelectItem>
+                       {/* <SelectItem value="financial">💰 Financial (Active Subscribers)</SelectItem> */}
                        <SelectItem value="engagement">🎯 Engagement (Expiring Soon)</SelectItem>
                        <SelectItem value="support">🛠️ Support (Active Subscribers)</SelectItem>
                        <SelectItem value="marketing">📢 Marketing (Active Subscribers)</SelectItem>
-                       <SelectItem value="retention">💎 Retention (Expiring Soon)</SelectItem>
+                       <SelectItem value="retention">💎 Inactive (Don't record)</SelectItem>
                      </SelectContent>
                   </Select>
                 </div>
