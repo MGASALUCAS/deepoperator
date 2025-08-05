@@ -109,6 +109,7 @@ const Dashboard = () => {
           {/* <p className="text-lg text-muted-foreground">
             Real-time insights powered by emotional intelligence
           </p> */}
+          
         </div>
         <Button variant="hero" size="lg" className="w-full lg:w-auto group">
           <Bell className="w-5 h-5 group-hover:rotate-12 transition-transform" />
