@@ -23,7 +23,7 @@ const Dashboard = () => {
       const endpoints = Array.from({length: 30}, (_, i) => i + 1);
       const promises = endpoints.map(async (endpointNum) => {
         try {
-          const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
+          const response = await fetch(`https://54.153.108.186/api/end${endpointNum}`);
                     // const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
 
           const data = await response.json();
@@ -103,13 +103,13 @@ const Dashboard = () => {
       <div className="space-y-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div className="space-y-2">
-          <h1 className="text-lg md:text-xl lg:text-2xl font-display font-bold text-foreground">
-            Measure progress and impact of the efforts
+          <h1 className="text-lg md:text-xl lg:text-1xl font-display font-bold text-foreground">
+            Measure progress and impact of your efforts ( Daily, Weekly to Yearly)
           </h1>
           {/* <p className="text-lg text-muted-foreground">
             Real-time insights powered by emotional intelligence
           </p> */}
-          
+
         </div>
         <Button variant="hero" size="lg" className="w-full lg:w-auto group">
           <Bell className="w-5 h-5 group-hover:rotate-12 transition-transform" />
