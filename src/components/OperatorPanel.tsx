@@ -12,6 +12,7 @@ import MessageCategoriesPanel, { MessageCategory } from "./MessageCategoriesPane
 import PredefinedCategoriesPanel from "./PredefinedCategoriesPanel";
 import AutomationRulesPanel, { AutomationRule } from "./AutomationRulesPanel";
 import { useToast } from "@/hooks/use-toast";
+import { API_ENDPOINTS } from "../lib/config";
 
 const initialCategories: MessageCategory[] = [
   {
@@ -172,7 +173,7 @@ const OperatorPanel = () => {
 
       const backendCategory = categoryMapping[selectedCategory] || selectedCategory;
 
-      const res = await fetch("https://54.153.108.186/api/notify", {
+      const res = await fetch(API_ENDPOINTS.NOTIFY, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

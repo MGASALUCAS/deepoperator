@@ -5,6 +5,7 @@ import { ChartBar, TrendingUp, Users, Bell } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import PowerBICard from "./PowerBICard";
 import LoadingOverlay from "./LoadingOverlay";
+import { API_ENDPOINTS } from "../lib/config";
 
 interface MetricData {
   metric: string;
@@ -23,9 +24,7 @@ const Dashboard = () => {
       const endpoints = Array.from({length: 30}, (_, i) => i + 1);
       const promises = endpoints.map(async (endpointNum) => {
         try {
-          const response = await fetch(`https://54.153.108.186/api/end${endpointNum}`);
-                    // const response = await fetch(`http://54.153.108.186/api/end${endpointNum}`);
-
+          const response = await fetch(API_ENDPOINTS.METRICS(endpointNum));
           const data = await response.json();
           return { endpointNum, data };
         } catch (error) {

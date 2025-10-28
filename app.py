@@ -1,15 +1,19 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from datetime import datetime
 import sqlite3
 import mysql.connector  # <-- Changed from psycopg2 to mysql.connector
+
+import pandas as pd
+import plotly.graph_objects as go
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
 # --- MySQL Config for production metrics ---
 MYSQL_DB = {
-    'host': 'kuzametrics.cauwlp3ore4a.us-west-1.rds.amazonaws.com',
+    'host': 'kuza-2025-rds.cauwlp3ore4a.us-west-1.rds.amazonaws.com',
     'user': 'admin',
     'password': 'kuzaDBUserPassword',
     'database': 'kuza',
@@ -40,6 +44,262 @@ def sqlite_connection():
     return conn
 
 # SECTION 1: Real-time Metrics Endpoints
+
+@app.route('/api/end1', methods=['GET'])
+def end1_active_users():
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM kuza.users u WHERE u.subscription_end > NOW() AND NOT EXISTS (SELECT 1 FROM kuza.subscriptions s WHERE s.user_id = u.user_id AND s.status = 'paid');")
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Users in Free Trial Period',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/end2', methods=['GET'])
+def end2_subs_ending_next_month():
+    """
+    Subscriptions ending in the next month.
+    Description: Identify users whose subscription will expire within the next 1 calendar month (30 days ahead).
+    """
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM kuza.users
+            WHERE subscription_end BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 MONTH);
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Subscriptions Ending Next Month',
+            'description': 'Users whose subscription will expire within the next 1 calendar month (30 days ahead).',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@app.route('/api/end3', methods=['GET'])
+def end3_subs_ending_5_days():
+    """
+    Subscriptions ending in the next 5 days.
+    Description: Urgent monitoring of subscriptions expiring soon for retention or renewal reminders.
+    """
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM kuza.users
+            WHERE subscription_end BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 5 DAY);
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Subscriptions Ending in 5 Days',
+            'description': 'Urgent monitoring of subscriptions expiring soon for retention or renewal reminders.',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/api/end4', methods=['GET'])
+def end4_users_registered_last_7_days():
+    """
+    Users registered within the last 7 days.
+    Description: Measures new user acquisition in the past week.
+    """
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM kuza.users
+            WHERE registered >= DATE_SUB(NOW(), INTERVAL 7 DAY);
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Users Registered Last 7 Days',
+            'description': 'Measures new user acquisition in the past week.',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/api/end5', methods=['GET'])
+def end5_free_trials_ending_today():
+    """
+    Users on free trial ending today.
+    Description: Tracks users who are just finishing their trial window today.
+    """
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM kuza.users
+            WHERE DATE(subscription_end) = CURDATE()
+              AND registered >= DATE_SUB(NOW(), INTERVAL 7 DAY);
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Free Trials Ending Today',
+            'description': 'Tracks users who are just finishing their trial window today.',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
+
+@app.route('/api/end6', methods=['GET'])
+def end6_subs_requested_today():
+    """
+    Subscriptions requested today.
+    Description: Measures today\'s incoming subscription activity.
+    """
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM kuza.subscriptions
+            WHERE DATE(registered) = CURDATE()
+                    AND status = 'paid';
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Subscriptions Today',
+            'description': 'Measures today\'s incoming subscription activity.',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@app.route('/api/end7', methods=['GET'])
+def end7_subs_requested_last_7_days():
+    """
+    Subscriptions requested in the last 7 days.
+    Description: Monitors recent interest or intent to subscribe.
+    """
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM kuza.subscriptions
+            WHERE registered >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                    AND status = 'paid';
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Subscriptions Last 7 Days',
+            'description': 'Monitors recent interest or intent to subscribe.',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/api/end8', methods=['GET'])
+def end8_subs_requested_last_month():
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM kuza.subscriptions
+            WHERE MONTH(registered) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))
+              AND YEAR(registered) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))
+                    AND status = 'paid'
+                    ;
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Subscriptions Last Month',
+            'description': 'Calculates the number of subscription intents made during the previous calendar month.',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/end9', methods=['GET'])
+def end9_subscriptions_current_month():
+    try:
+        conn = mysql_connection()
+        cur = conn.cursor()
+        cur.execute("""
+                SELECT COUNT(*) 
+                FROM kuza.subscriptions
+                WHERE registered >= DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00')
+                AND registered <= NOW()
+                AND status = 'paid';
+        """)
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({
+            'metric': 'Subscriptions This Month',
+            'description': 'Number of subscription made during this month.',
+            'value': count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/end10', methods=['GET'])
+def end10_conversion_rate():
+    return jsonify({'metric': 'Conversion Rate', 'description': 'Trial to paid subscription conversion.', 'value': '24.7%', 'timestamp': datetime.now().isoformat()})
+
+@app.route('/api/end11', methods=['GET'])
+def end11_customer_satisfaction():
+    return jsonify({'metric': 'Customer Satisfaction', 'description': 'Average user rating and feedback.', 'value': '4.8/5', 'timestamp': datetime.now().isoformat()})
+
+@app.route('/api/end12', methods=['GET'])
+def end12_system_uptime():
+    return jsonify({'metric': 'System Uptime', 'description': 'Service availability last 30 days.', 'value': '99.9%', 'timestamp': datetime.now().isoformat()})
+
+@app.route('/api/end13', methods=['GET'])
+def end13_response_time():
+    return jsonify({'metric': 'Response Time', 'description': 'Average API response latency.', 'value': '0.8s', 'timestamp': datetime.now().isoformat()})
+
+@app.route('/api/end14', methods=['GET'])
+def end14_engagement_rate():
+    return jsonify({'metric': 'User Engagement', 'description': 'Daily active user interaction rate.', 'value': '87.3%', 'timestamp': datetime.now().isoformat()})
+
+@app.route('/api/end15', methods=['GET'])
+def end15_storage_usage():
+    return jsonify({'metric': 'Storage Usage', 'description': 'Current database storage utilization.', 'value': '456GB', 'timestamp': datetime.now().isoformat()})
+
+@app.route('/api/end16', methods=['GET'])
+def end16_error_rate():
+    return jsonify({'metric': 'Error Rate', 'description': 'System error percentage last 24h.', 'value': '0.02%', 'timestamp': datetime.now().isoformat()})
+
 
 @app.route('/api/end17', methods=['GET'])
 def total_signups_all_time():
@@ -73,7 +333,7 @@ def signups_last_calendar_month():
             SELECT COUNT(*) AS signups_last_month
             FROM kuza.users
             WHERE MONTH(registered) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))
-            #   AND YEAR(registered) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH));
+            AND YEAR(registered) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH));
         """)
         count = cur.fetchone()[0]
         cur.close()
@@ -210,7 +470,7 @@ def registered_last_7_days_on_free_trial():
         conn.close()
 
         return jsonify({
-            'metric': 'New Users on Free Trial (Last 7 Days)',
+            'metric': 'New Users & Paid while on (Free Trial)',
             'value': count,
             'timestamp': datetime.now().isoformat()
         })
@@ -295,8 +555,8 @@ def currently_active_paid_users():
             SELECT COUNT(DISTINCT u.user_id)
             FROM kuza.users u
             JOIN kuza.subscriptions s ON u.user_id = s.user_id
-            WHERE s.plan_type = 'paid'
-              AND s.subscription_end >= NOW();
+            WHERE s.status = 'paid'
+              AND u.subscription_end >= NOW();
         """)
         count = cur.fetchone()[0]
         cur.close()
@@ -309,370 +569,56 @@ def currently_active_paid_users():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-
-@app.route('/api/end1', methods=['GET'])
-def end1_active_users():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM users WHERE subscription_end > NOW();")
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Active Users',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/end2', methods=['GET'])
-def end2_subs_ending_next_month():
-    """
-    Subscriptions ending in the next month.
-    Description: Identify users whose subscription will expire within the next 1 calendar month (30 days ahead).
-    """
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE subscription_end BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 MONTH);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Ending Next Month',
-            'description': 'Users whose subscription will expire within the next 1 calendar month (30 days ahead).',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
     
 
-def end2_subs_ending_next_month():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE subscription_end BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 MONTH);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Ending Next Month',
-            'description': 'Users whose subscription will expire within the next 1 calendar month (30 days ahead).',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route("/reports/expired-users", methods=["GET"])
+def report_expired_users():
+    sql = """
+            SELECT 
+            DATE_FORMAT(u.subscription_end, '%Y-%m') AS mwezi,
+            COUNT(DISTINCT u.user_id) AS expired_users
+            FROM kuza.users u
+            JOIN kuza.subscriptions s ON u.user_id = s.user_id
+            WHERE s.status = 'paid'
+            -- window: from first day of (current month - 6) up to first day of next month
+            AND u.subscription_end >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 6 MONTH), '%Y-%m-01 00:00:00')
+            AND u.subscription_end <  DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 1 MONTH), '%Y-%m-01 00:00:00')
+            -- count only those already expired as of this moment
+            AND u.subscription_end < NOW()
+            GROUP BY mwezi
+            ORDER BY mwezi ASC;
+        """
 
-@app.route('/api/end3', methods=['GET'])
-def end3_subs_ending_5_days():
-    """
-    Subscriptions ending in the next 5 days.
-    Description: Urgent monitoring of subscriptions expiring soon for retention or renewal reminders.
-    """
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE subscription_end BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 5 DAY);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Ending in 5 Days',
-            'description': 'Urgent monitoring of subscriptions expiring soon for retention or renewal reminders.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-def end3_subs_ending_5_days():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE subscription_end BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 5 DAY);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Ending in 5 Days',
-            'description': 'Urgent monitoring of subscriptions expiring soon for retention or renewal reminders.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    conn = mysql_connection()
+    df = pd.read_sql(sql, conn)
+    conn.close()
 
-@app.route('/api/end4', methods=['GET'])
-def end4_users_registered_last_7_days():
-    """
-    Users registered within the last 7 days.
-    Description: Measures new user acquisition in the past week.
-    """
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE registered >= DATE_SUB(NOW(), INTERVAL 7 DAY);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Users Registered Last 7 Days',
-            'description': 'Measures new user acquisition in the past week.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-def end4_users_registered_last_7_days():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE registered >= DATE_SUB(NOW(), INTERVAL 7 DAY);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Users Registered Last 7 Days',
-            'description': 'Measures new user acquisition in the past week.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    if not df.empty:
+        df["mwezi"] = pd.to_datetime(df["mwezi"], format="%Y-%m")
+        df.sort_values("mwezi", inplace=True)
+        df["mwezi"] = df["mwezi"].dt.strftime("%b %Y")  # e.g., "Jul 2025"
 
-@app.route('/api/end5', methods=['GET'])
-def end5_free_trials_ending_today():
-    """
-    Users on free trial ending today.
-    Description: Tracks users who are just finishing their trial window today.
-    """
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE DATE(subscription_end) = CURDATE()
-              AND registered >= DATE_SUB(NOW(), INTERVAL 7 DAY);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Free Trials Ending Today',
-            'description': 'Tracks users who are just finishing their trial window today.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-def end5_free_trials_ending_today():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.users
-            WHERE DATE(subscription_end) = CURDATE()
-              AND registered >= DATE_SUB(NOW(), INTERVAL 7 DAY);
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Free Trials Ending Today',
-            'description': 'Tracks users who are just finishing their trial window today.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    fig = go.Figure(go.Bar(
+        x=df["mwezi"] if not df.empty else [],
+        y=df["expired_users"] if not df.empty else [],
+        text=df["expired_users"] if not df.empty else [],
+        textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Expired Users: %{y}<extra></extra>"
+    ))
+    fig.update_layout(
+        xaxis_title="Mwezi",
+        yaxis_title="Expired Users",
+        margin=dict(l=40, r=20, t=10, b=50),
+        bargap=0.25,
+        template="plotly_white",
+    )
+    fig.update_yaxes(rangemode="tozero")
 
-@app.route('/api/end6', methods=['GET'])
-def end6_subs_requested_today():
-    """
-    Subscriptions requested today.
-    Description: Measures today\'s incoming subscription activity.
-    """
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.subscriptions
-            WHERE DATE(registered) = CURDATE()
-                    AND status = 'paid';
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Today',
-            'description': 'Measures today\'s incoming subscription activity.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-def end6_subs_requested_today():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.subscriptions
-            WHERE DATE(registered) = CURDATE()
-                    AND status = 'paid';
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Today',
-            'description': 'Measures today\'s incoming subscription activity.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # Return ONLY the Plotly HTML for the chart
+    chart_html = fig.to_html(full_html=False, include_plotlyjs="cdn",
+                             config={"displaylogo": False})
+    return Response(chart_html, mimetype="text/html")
 
-@app.route('/api/end7', methods=['GET'])
-def end7_subs_requested_last_7_days():
-    """
-    Subscriptions requested in the last 7 days.
-    Description: Monitors recent interest or intent to subscribe.
-    """
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.subscriptions
-            WHERE registered >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                    
-                    AND status = 'paid';
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Last 7 Days',
-            'description': 'Monitors recent interest or intent to subscribe.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-def end7_subs_requested_last_7_days():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.subscriptions
-            WHERE registered >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                    
-                    AND status = 'paid';
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Last 7 Days',
-            'description': 'Monitors recent interest or intent to subscribe.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/end8', methods=['GET'])
-def end8_subs_requested_last_month():
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.subscriptions
-            WHERE MONTH(registered) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))
-              AND YEAR(registered) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))
-                    AND status = 'paid'
-                    ;
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Last Month',
-            'description': 'Calculates the number of subscription intents made during the previous calendar month.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-def end8_subs_requested_last_month():
-    """
-    Subscriptions requested last month (calendar month).
-    Description: Calculates the number of subscription intents made during the previous calendar month.
-    """
-    try:
-        conn = mysql_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM kuza.subscriptions
-            WHERE MONTH(registered) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))
-              AND YEAR(registered) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))
-                    AND status = 'paid';
-        """)
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({
-            'metric': 'Subscriptions Last Month',
-            'description': 'Calculates the number of subscription intents made during the previous calendar month.',
-            'value': count,
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/end9', methods=['GET'])
-def end9_meanings():
-    """
-    Endpoint meanings for /api/end2 to /api/end8.
-    """
-    return jsonify({
-        'end2': 'Subscriptions ending in the next month (users whose subscription will expire within the next 1 calendar month).',
-        'end3': 'Subscriptions ending in the next 5 days (urgent monitoring for retention/reminders).',
-        'end4': 'Users registered within the last 7 days (new user acquisition in the past week).',
-        'end5': 'Users on free trial ending today (users finishing their trial window today).',
-        'end6': 'Subscriptions requested today (today\'s incoming subscription activity).',
-        'end7': 'Subscriptions requested in the last 7 days (recent interest or intent to subscribe).',
-        'end8': 'Subscriptions requested last month (number of subscription intents made during the previous calendar month).',
-        'timestamp': datetime.now().isoformat()
-    })
-
-@app.route('/api/end9', methods=['GET'])
-def end9_engagement():
-    return jsonify({'metric': 'User Engagement Index', 'value': 8.3, 'unit': '/10', 'timestamp': datetime.now().isoformat()})
 
 # SECTION 2: Dedicated Message Sending for Each Code
 def handle_message_send(code):
@@ -708,38 +654,6 @@ def send_msg_147(): return handle_message_send(147)
 
 @app.route('/api/send/190', methods=['GET'])
 def send_msg_190(): return handle_message_send(190)
-
-@app.route('/api/end9', methods=['GET'])
-def end9_revenue_growth():
-    return jsonify({'metric': 'Revenue Growth', 'description': 'Monthly revenue increase percentage.', 'value': '18.5%', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/api/end10', methods=['GET'])
-def end10_conversion_rate():
-    return jsonify({'metric': 'Conversion Rate', 'description': 'Trial to paid subscription conversion.', 'value': '24.7%', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/api/end11', methods=['GET'])
-def end11_customer_satisfaction():
-    return jsonify({'metric': 'Customer Satisfaction', 'description': 'Average user rating and feedback.', 'value': '4.8/5', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/api/end12', methods=['GET'])
-def end12_system_uptime():
-    return jsonify({'metric': 'System Uptime', 'description': 'Service availability last 30 days.', 'value': '99.9%', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/api/end13', methods=['GET'])
-def end13_response_time():
-    return jsonify({'metric': 'Response Time', 'description': 'Average API response latency.', 'value': '0.8s', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/api/end14', methods=['GET'])
-def end14_engagement_rate():
-    return jsonify({'metric': 'User Engagement', 'description': 'Daily active user interaction rate.', 'value': '87.3%', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/api/end15', methods=['GET'])
-def end15_storage_usage():
-    return jsonify({'metric': 'Storage Usage', 'description': 'Current database storage utilization.', 'value': '456GB', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/api/end16', methods=['GET'])
-def end16_error_rate():
-    return jsonify({'metric': 'Error Rate', 'description': 'System error percentage last 24h.', 'value': '0.02%', 'timestamp': datetime.now().isoformat()})
 
 # SECTION 3: Health Check
 @app.route('/api/health', methods=['GET'])

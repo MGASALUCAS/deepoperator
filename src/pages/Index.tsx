@@ -5,6 +5,7 @@ import HeroNavigation from "../components/HeroNavigation";
 import DesktopSidebar from "../components/DesktopSidebar";
 import PageTransition from "../components/PageTransition";
 import ResponsiveContainer from "../components/ResponsiveContainer";
+import SessionIndicator from "../components/SessionIndicator";
 import Dashboard from "../components/Dashboard";
 import Warehouse from "../components/Warehouse";
 import OperatorPanel from "../components/OperatorPanel";
@@ -33,6 +34,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
+      {/* Session Indicator */}
+      <SessionIndicator />
+      
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
