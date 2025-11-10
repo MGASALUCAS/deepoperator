@@ -160,11 +160,11 @@ const OperatorPanel = () => {
     }
 
     setIsLoading(true);
-    
+
     try {
       const categoryMapping: { [key: string]: string } = {
         "onboarding": "onboarding message",
-        "financial": "active subscribers", 
+        "financial": "active subscribers",
         "engagement": "expiring soon",
         "support": "active subscribers",
         "marketing": "active subscribers",
@@ -184,13 +184,13 @@ const OperatorPanel = () => {
       });
 
       const data = await res.json();
-      
+
       if (res.ok && data.success) {
         toast({
           title: "Notification Sent Successfully! 🚀",
           description: `Message delivered to ${data.sent_to} users in the ${selectedCategory} category.`,
         });
-        
+
         // Clear form
         setMessageTitle("");
         setMessageContent("");
@@ -233,7 +233,7 @@ const OperatorPanel = () => {
             }
           : cat
 
-          
+
       )
     );
   };
@@ -255,21 +255,21 @@ const OperatorPanel = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-7 pb-24 sm:pb-12 lg:pb-16">
       {/* Predefined Categories section - top priority */}
       <PredefinedCategoriesPanel />
       {/* Professional Operator Panel Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 sm:gap-3.5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#FF6B6B" }}>Operator Panel</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight" style={{ color: "#FF6B6B" }}>Operator Panel</h1>
+          <p className="text-xs sm:text-sm lg:text-sm text-muted-foreground">
             Intelligent notification automation and engagement engine
           </p>
         </div>
       </div>
       {/* Main content grid: categories on top, rules middle section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5">
+        <div className="lg:col-span-2 space-y-5">
           {/* Automation Rules Panel (new and professional management) */}
           <AutomationRulesPanel
             rules={automationRules}
@@ -279,13 +279,13 @@ const OperatorPanel = () => {
           />
           {/* Message Composer */}
           <Card>
-            <CardHeader>
-              <CardTitle>Message Composer</CardTitle>
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-base sm:text-lg">Message Composer</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-3.5 p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium">Notification Type</label>
+                  <label className="text-xs sm:text-sm font-medium">Notification Type</label>
                   <Select value={notificationType} onValueChange={setNotificationType}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
@@ -298,9 +298,9 @@ const OperatorPanel = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
-                  <label className="text-sm font-medium">Category</label>
+                  <label className="text-xs sm:text-sm font-medium">Category</label>
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -316,32 +316,32 @@ const OperatorPanel = () => {
                   </Select>
                 </div>
               </div>
-              
-              <div>
-                <label className="text-sm font-medium">Subject/Title</label>
-                <Input value={messageTitle} onChange={(e) => setMessageTitle(e.target.value)} placeholder="Enter message title..." />
+
+              <div className="sm:col-span-2">
+                <label className="text-xs sm:text-sm font-medium">Subject/Title</label>
+                <Input value={messageTitle} onChange={(e) => setMessageTitle(e.target.value)} placeholder="Enter message title..." className="mt-1" />
               </div>
-              
-              <div>
-                <label className="text-sm font-medium">Message Content</label>
-                <Textarea value={messageContent} onChange={(e) => setMessageContent(e.target.value)} placeholder="Write your message..." rows={4} />
+
+              <div className="sm:col-span-2">
+                <label className="text-xs sm:text-sm font-medium">Message Content</label>
+                <Textarea value={messageContent} onChange={(e) => setMessageContent(e.target.value)} placeholder="Write your message..." rows={4} className="mt-1 resize-none" />
               </div>
-              
-              <div className="flex gap-2">
-                <Button 
-                  onClick={handleSend} 
+
+              <div className="flex gap-2 sm:col-span-2">
+                <Button
+                  onClick={handleSend}
                   disabled={isLoading || !selectedCategory || !messageTitle || !messageContent}
-                  className="min-w-[120px]"
+                  className="w-full sm:w-auto min-w-[110px] text-sm sm:text-base py-2"
                 >
                   {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                      Sending...
+                      <span className="text-sm sm:text-base">Sending...</span>
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      SEND
+                      <span className="text-sm sm:text-base">SEND</span>
                     </>
                   )}
                 </Button>
@@ -349,22 +349,22 @@ const OperatorPanel = () => {
             </CardContent>
           </Card>
         </div>
-        <div className="space-y-6">
+        <div className="space-y-5">
 
 
 
           {/* AI Suggestions */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Smile className="w-5 h-5" />
-                AI Suggestions
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <Smile className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>AI Suggestions</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2.5 p-3 sm:p-4">
               {aiSuggestions.map((suggestion, index) => (
                 <div key={index} className="p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                     <Badge variant="outline" className="text-xs">
                       {suggestion.type}
                     </Badge>
@@ -377,7 +377,7 @@ const OperatorPanel = () => {
                       </Button>
                     </div>
                   </div>
-                  <p className="text-sm">{suggestion.suggestion}</p>
+                  <p className="text-xs sm:text-sm break-words">{suggestion.suggestion}</p>
                 </div>
               ))}
             </CardContent>
@@ -385,21 +385,21 @@ const OperatorPanel = () => {
           {/* Categories section - merged at top, so you can remove here if duplicate */}
           {/* Recent Activity */}
           <Card>
-            <CardHeader>
-              <CardTitle>Recent Notifications</CardTitle>
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-sm sm:text-base">Recent Notifications</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span>Welcome Email Sent</span>
-                <Badge variant="secondary">2m ago</Badge>
+            <CardContent className="space-y-2.5 p-3 sm:p-4">
+              <div className="flex items-center justify-between text-xs sm:text-sm flex-wrap gap-2">
+                <span className="truncate flex-1 min-w-0">Welcome Email Sent</span>
+                <Badge variant="secondary" className="text-xs">2m ago</Badge>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>Payment Reminder</span>
-                <Badge variant="secondary">5m ago</Badge>
+              <div className="flex items-center justify-between text-xs sm:text-sm flex-wrap gap-2">
+                <span className="truncate flex-1 min-w-0">Payment Reminder</span>
+                <Badge variant="secondary" className="text-xs">5m ago</Badge>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>Engagement Push</span>
-                <Badge variant="secondary">12m ago</Badge>
+              <div className="flex items-center justify-between text-xs sm:text-sm flex-wrap gap-2">
+                <span className="truncate flex-1 min-w-0">Engagement Push</span>
+                <Badge variant="secondary" className="text-xs">12m ago</Badge>
               </div>
             </CardContent>
           </Card>

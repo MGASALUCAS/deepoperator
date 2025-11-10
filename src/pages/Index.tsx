@@ -36,7 +36,7 @@ const Index = () => {
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       {/* Session Indicator */}
       <SessionIndicator />
-      
+
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -58,28 +58,28 @@ const Index = () => {
       </div>
 
       {/* Desktop Sidebar */}
-      <DesktopSidebar 
-        activeSection={activeSection} 
-        setActiveSection={setActiveSection} 
+      <DesktopSidebar
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
       />
 
       {/* Mobile Navigation */}
       <div className="lg:hidden">
-        <HeroNavigation 
-          activeSection={activeSection} 
-          setActiveSection={setActiveSection} 
+        <HeroNavigation
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
         />
       </div>
 
       {/* Main Content Area */}
-      <main className="pt-24 pb-20 lg:pt-8 lg:pb-8 lg:pl-80 relative z-10">
-        <ResponsiveContainer maxWidth="full" padding="lg">
+      <main className="pt-16 sm:pt-20 pb-16 sm:pb-20 lg:pt-6 lg:pb-6 lg:pl-80 relative z-10">
+        <ResponsiveContainer maxWidth="full" padding="sm">
           <PageTransition pageKey={activeSection}>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="glass rounded-3xl shadow-magical border border-border/50 p-6 md:p-8 lg:p-12 backdrop-blur-xl"
+              className="glass rounded-lg sm:rounded-xl lg:rounded-2xl shadow-magical border border-border/40 p-3 sm:p-4 md:p-6 lg:p-8 backdrop-blur-xl mx-1.5 sm:mx-3 lg:mx-0"
             >
               {renderActiveSection()}
             </motion.div>

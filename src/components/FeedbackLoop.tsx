@@ -75,104 +75,104 @@ const FeedbackLoop = () => {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div className="space-y-5 sm:space-y-6 pb-24 sm:pb-12 lg:pb-16">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 sm:gap-3.5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Feedback Loop</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight">Feedback Loop</h1>
+          <p className="text-xs sm:text-sm lg:text-sm text-muted-foreground">
             Customer sentiment analysis and emotional intelligence insights
           </p>
         </div>
-        <Button>
+        <Button className="w-full sm:w-auto text-sm sm:text-base lg:text-sm px-4 py-2 sm:py-2.5">
           <MessageCircle className="w-4 h-4 mr-2" />
-          Export Report
+          <span className="text-sm sm:text-base">Export Report</span>
         </Button>
       </div>
 
       {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Open Rate</p>
-                <p className="text-2xl font-bold">{metrics.openRate}%</p>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Open Rate</p>
+                <p className="text-base sm:text-lg md:text-xl font-bold">{metrics.openRate}%</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-green-500 flex-shrink-0" />
             </div>
             <Progress value={metrics.openRate} className="mt-2" />
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Click Rate</p>
-                <p className="text-2xl font-bold">{metrics.clickRate}%</p>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Click Rate</p>
+                <p className="text-base sm:text-lg md:text-xl font-bold">{metrics.clickRate}%</p>
               </div>
-              <MessageCircle className="w-8 h-8 text-blue-500" />
+              <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-blue-500 flex-shrink-0" />
             </div>
             <Progress value={metrics.clickRate} className="mt-2" />
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Response Rate</p>
-                <p className="text-2xl font-bold">{metrics.responseRate}%</p>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Response Rate</p>
+                <p className="text-base sm:text-lg md:text-xl font-bold">{metrics.responseRate}%</p>
               </div>
-              <Heart className="w-8 h-8 text-red-500" />
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-red-500 flex-shrink-0" />
             </div>
             <Progress value={metrics.responseRate} className="mt-2" />
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Conversion Rate</p>
-                <p className="text-2xl font-bold">{metrics.conversionRate}%</p>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Conversion Rate</p>
+                <p className="text-base sm:text-lg md:text-xl font-bold">{metrics.conversionRate}%</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-purple-500" />
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-purple-500 flex-shrink-0" />
             </div>
             <Progress value={metrics.conversionRate} className="mt-2" />
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5">
         {/* Message Timeline */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-3.5 sm:space-y-5">
           <Card>
-            <CardHeader>
-              <CardTitle>Message Timeline & Responses</CardTitle>
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-sm sm:text-base">Message Timeline & Responses</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-3 sm:space-y-4 p-3.5 sm:p-5">
               {sentMessages.map((msg) => (
-                <div key={msg.id} className="border-l-4 border-primary pl-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">{msg.message}</h3>
-                    <Badge variant={msg.sentiment === "positive" ? "default" : msg.sentiment === "mixed" ? "secondary" : "destructive"}>
+                <div key={msg.id} className="border-l-4 border-primary pl-3 sm:pl-4 space-y-2 sm:space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <h3 className="font-medium text-xs sm:text-sm break-words flex-1 min-w-0">{msg.message}</h3>
+                    <Badge variant={msg.sentiment === "positive" ? "default" : msg.sentiment === "mixed" ? "secondary" : "destructive"} className="text-xs flex-shrink-0">
                       {msg.sentiment}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">{msg.timestamp}</p>
-                  
+                  <p className="text-xs sm:text-sm text-muted-foreground">{msg.timestamp}</p>
+
                   <div className="space-y-2">
                     {msg.responses.map((response, index) => (
-                      <div key={index} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          {response.type === "emoji" && <span className="text-lg">{response.content}</span>}
+                      <div key={index} className="flex items-start gap-2 sm:gap-3 p-2 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {response.type === "emoji" && <span className="text-sm sm:text-base">{response.content}</span>}
                           {response.type === "reply" && <MessageCircle className="w-4 h-4 text-blue-500" />}
                           {response.type === "click" && <TrendingUp className="w-4 h-4 text-green-500" />}
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm">{response.content}</p>
-                          <p className="text-xs text-muted-foreground">{response.user}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] sm:text-xs break-words">{response.content}</p>
+                          <p className="text-[11px] sm:text-xs text-muted-foreground">{response.user}</p>
                         </div>
                       </div>
                     ))}
@@ -184,19 +184,19 @@ const FeedbackLoop = () => {
         </div>
 
         {/* Sentiment & Summary */}
-        <div className="space-y-6">
+        <div className="space-y-3.5 sm:space-y-5">
           {/* Sentiment Heatmap */}
           <Card>
-            <CardHeader>
-              <CardTitle>Sentiment Heatmap</CardTitle>
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-sm sm:text-base">Sentiment Heatmap</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2.5 p-3 sm:p-4">
               {sentimentData.map((sentiment, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded ${sentiment.color}`} />
-                  <div className="flex-1 flex items-center justify-between">
-                    <span className="text-sm">{sentiment.emotion}</span>
-                    <span className="text-sm font-medium">{sentiment.count}</span>
+                <div key={index} className="flex items-center gap-2 sm:gap-3">
+                  <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded flex-shrink-0 ${sentiment.color}`} />
+                  <div className="flex-1 flex items-center justify-between min-w-0 gap-2">
+                    <span className="text-xs sm:text-sm truncate">{sentiment.emotion}</span>
+                    <span className="text-xs sm:text-sm font-medium flex-shrink-0">{sentiment.count}</span>
                   </div>
                 </div>
               ))}
@@ -205,14 +205,14 @@ const FeedbackLoop = () => {
 
           {/* Feedback Summary */}
           <Card>
-            <CardHeader>
-              <CardTitle>Feedback Summary</CardTitle>
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-sm sm:text-base">Feedback Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 p-3.5 sm:p-4">
               {feedbackSummary.map((item, index) => (
                 <div key={index} className="p-3 border rounded-lg">
-                  <h4 className="font-medium text-sm mb-1">{item.title}</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{item.content}</p>
+                  <h4 className="font-medium text-xs sm:text-sm mb-1">{item.title}</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-2 break-words">{item.content}</p>
                   <Badge variant="outline" className="text-xs">{item.metric}</Badge>
                 </div>
               ))}
@@ -221,12 +221,12 @@ const FeedbackLoop = () => {
 
           {/* Manual Notes */}
           <Card>
-            <CardHeader>
-              <CardTitle>Operator Notes</CardTitle>
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-sm sm:text-base">Operator Notes</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Textarea placeholder="Add your observations and follow-up actions..." rows={4} />
-              <Button className="w-full">Save Notes</Button>
+            <CardContent className="space-y-2.5 p-3.5 sm:p-4">
+              <Textarea placeholder="Add your observations and follow-up actions..." rows={4} className="resize-none text-xs sm:text-sm" />
+              <Button className="w-full text-sm sm:text-base py-2 sm:py-2.5">Save Notes</Button>
             </CardContent>
           </Card>
         </div>

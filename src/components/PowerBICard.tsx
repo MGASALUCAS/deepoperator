@@ -10,7 +10,7 @@ interface PowerBICardProps {
   className?: string;
 }
 
-const PowerBICard = ({ 
+const PowerBICard = ({
   title = "Core Analytics Dashboard",
   embedUrl = "https://app.powerbi.com/reportEmbed?reportId=sample-id&autoAuth=true&ctid=sample-tenant",
   className = ""
@@ -18,19 +18,21 @@ const PowerBICard = ({
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   return (
-    <Card className={`border-lavender/20 overflow-hidden ${className}`}>
+    <Card
+      className={`border-lavender/20 overflow-hidden flex flex-col min-h-[24rem] sm:min-h-[30rem] lg:min-h-[28rem] xl:min-h-[30rem] ${className}`}
+    >
       <CardHeader className="flex-none">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="flex items-center gap-2 min-w-0 flex-1">
-            <ChartBar className="w-5 h-5 text-coral flex-none" />
+          <CardTitle className="flex items-center gap-2 min-w-0 flex-1 text-sm sm:text-base">
+            <ChartBar className="w-4 h-4 sm:w-5 sm:h-5 text-coral flex-none" />
             <span className="truncate">{title}</span>
           </CardTitle>
           <div className="flex gap-2 flex-none">
             <Dialog open={isFullScreen} onOpenChange={setIsFullScreen}>
               <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="border-coral/20 text-coral hover:bg-coral/5 transition-all hover:scale-105 flex-none"
                 >
                   <Maximize className="w-4 h-4 sm:mr-1" />
@@ -50,8 +52,8 @@ const PowerBICard = ({
                     allowFullScreen
                     className="w-full h-full border-0"
                     title={`${title} Full Screen`}
-                    style={{ 
-                      minHeight: '100vh', 
+                    style={{
+                      minHeight: '100vh',
                       minWidth: '100vw',
                       overflow: 'hidden'
                     }}
@@ -59,9 +61,9 @@ const PowerBICard = ({
                 </div>
               </DialogContent>
             </Dialog>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="border-mint/20 text-mint hover:bg-mint/5 flex-none"
             >
               <Settings className="w-4 h-4" />
@@ -69,8 +71,8 @@ const PowerBICard = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 flex-1">
-        <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden bg-gradient-to-br from-coral/5 to-mint/5 border border-border/20">
+      <CardContent className="p-0 flex-1 min-h-[20rem] sm:min-h-[26rem] lg:min-h-[26rem] xl:min-h-[30rem]">
+        <div className="relative w-full h-full min-h-[20rem] sm:min-h-[26rem] lg:min-h-[28rem] xl:min-h-[32rem] rounded-lg overflow-hidden bg-gradient-to-br from-coral/5 to-mint/5 border border-border/20">
           <iframe
             src={embedUrl}
             width="100%"
@@ -79,10 +81,11 @@ const PowerBICard = ({
             allowFullScreen
             className="absolute inset-0 w-full h-full rounded-lg border-0"
             title={title}
-            style={{ 
+            style={{
               maxWidth: '100%',
               maxHeight: '100%',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              minHeight: '340px'
             }}
           />
           {/* Loading overlay */}
