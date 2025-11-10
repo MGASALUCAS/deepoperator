@@ -116,8 +116,7 @@ const Warehouse = () => {
                         <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
                           <div className="w-full h-full overflow-hidden">
                             <iframe
-                              src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
-                              frameBorder={0}
+                              src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}                              frameBorder={0}
                               allowFullScreen
                               className="w-full h-full"
                               title={`${dashboard.title} Dashboard - Full Screen`}
@@ -155,8 +154,7 @@ const Warehouse = () => {
                 ) : (
                   <div className="relative w-full h-64 border-2 border-dashed border-coral/25 rounded-lg bg-coral/5 overflow-hidden group/iframe hover:border-coral/40 transition-colors">
                     <iframe
-                      src="https://app.powerbi.com/reportEmbed?reportId=58fff6f7-f29b-4318-9b56-e7bf0063ea90&autoAuth=true&ctid=1e5b3c3f-31c6-4542-9f7b-66622064c37d"
-                      frameBorder={0}
+                      src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}                      frameBorder={0}
                       allowFullScreen
                       className="absolute top-0 left-0 w-full h-full rounded-lg transition-opacity group-hover/iframe:opacity-90"
                       title={`${dashboard.title} Dashboard`}
