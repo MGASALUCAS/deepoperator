@@ -6,6 +6,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ChartBar, Filter, Settings, Maximize, RefreshCcw } from "lucide-react";
 import { API_ENDPOINTS } from "../lib/config";
 
+type ReportDashboard = {
+  id: string;
+  title: string;
+  description: string;
+  lastUpdated: string;
+  endpoint: string;
+  timeWindow: string;
+  refreshable?: boolean;
+};
+
 const Warehouse = () => {
   const [filters, setFilters] = useState({
     region: "all",
@@ -13,35 +23,60 @@ const Warehouse = () => {
     userLevel: "all"
   });
 
-  // NEW: key to force-refresh only the Churn iframe
-  const [churnRefreshKey, setChurnRefreshKey] = useState(0);
+  const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
 
-  const mockDashboards = [
+  const dashboards: ReportDashboard[] = [
     {
-      title: "Churn Analysis:",
-      description: "Real-time analysis of customers churns",
-      type: "financial",
-      lastUpdated: "2 minutes ago"
+      id: "expired-users",
+      title: "Expired Users Trend",
+      description: "Track how many paid customers churn each month.",
+      lastUpdated: "1 minute ago",
+      endpoint: API_ENDPOINTS.EXPIRED_USERS,
+      timeWindow: "Last 6 months",
+      refreshable: true
     },
     {
-      title: "Login Trends & Patterns",
-      description: "User activity and engagement metrics",
-      type: "engagement",
-      lastUpdated: "5 minutes ago"
+      id: "registrations-paid",
+      title: "Registrations vs Paid",
+      description: "Compare registrations, paid users, and conversion rate.",
+      lastUpdated: "Just now",
+      endpoint: API_ENDPOINTS.REGISTRATIONS_AND_PAID_SAME_MONTH,
+      timeWindow: "Rolling 12 months"
     },
     {
-      title: "Subscription Renewals",
-      description: "Renewal rates and churn prediction",
-      type: "subscription",
-      lastUpdated: "1 minute ago"
+      id: "subscriptions-live",
+      title: "Subscriptions Live Breakdown",
+      description: "Current month mix of signups, renewals, and reactivations.",
+      lastUpdated: "Current month",
+      endpoint: API_ENDPOINTS.SUBSCRIPTIONS_LIVE_BREAKDOWN,
+      timeWindow: "Current month"
     },
     {
-      title: "Sales Distribution",
-      description: "Geographic and demographic sales analysis",
-      type: "sales",
-      lastUpdated: "3 minutes ago"
+      id: "executive-snapshot",
+      title: "Executive Snapshot",
+      description: "Quick reference view for leadership dashboards.",
+      lastUpdated: "Moments ago",
+      endpoint: API_ENDPOINTS.EXPIRED_USERS,
+      timeWindow: "Key KPI"
     }
   ];
+
+  const getRefreshKey = (id: string) => refreshKeys[id] ?? 0;
+
+  const handleRefresh = (id: string) => {
+    setRefreshKeys(prev => ({
+      ...prev,
+      [id]: (prev[id] ?? 0) + 1
+    }));
+  };
+
+  const getIframeSrc = (dashboard: ReportDashboard) => {
+    if (!dashboard.refreshable) {
+      return dashboard.endpoint;
+    }
+    const refreshSeed = getRefreshKey(dashboard.id);
+    return `${dashboard.endpoint}?ts=${refreshSeed}`;
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-24 sm:pb-12 lg:pb-16">
@@ -51,9 +86,10 @@ const Warehouse = () => {
 
       {/* Dashboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3">
-        {mockDashboards.map((dashboard, index) => {
-          const isChurn = dashboard.title === "Churn Analysis:";
-
+        {dashboards.map((dashboard, index) => {
+          const isExpiredReport = dashboard.id === "expired-users";
+          const refreshSeed = getRefreshKey(dashboard.id);
+          const iframeSrc = getIframeSrc(dashboard);
           return (
             <Card
               key={index}
@@ -70,13 +106,13 @@ const Warehouse = () => {
                   </CardTitle>
 
                   <div className="flex gap-1 sm:gap-1.5 flex-wrap">
-                    {/* Refresh stays only for Churn */}
-                    {isChurn && (
+                    {/* Refresh optional per report */}
+                    {dashboard.refreshable && (
                       <Button
                         variant="outline"
                         size="sm"
                         className="border-coral/20 text-coral hover:bg-coral/5 text-xs sm:text-sm"
-                        onClick={() => setChurnRefreshKey(k => k + 1)}
+                        onClick={() => handleRefresh(dashboard.id)}
                         title="Refresh chart"
                       >
                         <RefreshCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
@@ -85,7 +121,7 @@ const Warehouse = () => {
                     )}
 
                     {/* FULL SCREEN: Churn uses your Flask Plotly chart; others keep PowerBI */}
-                    {isChurn ? (
+                    {isExpiredReport ? (
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5 text-xs sm:text-sm">
@@ -96,12 +132,12 @@ const Warehouse = () => {
                         <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
                           {/* Just the Plotly graph, edge-to-edge */}
                           <iframe
-                            key={churnRefreshKey}
-                            src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}
+                            key={`${dashboard.id}-fullscreen-${refreshSeed}`}
+                            src={iframeSrc}
                             frameBorder={0}
                             allowFullScreen
                             className="w-full h-full"
-                            title="Churn Analysis Chart — Full Screen"
+                            title={`${dashboard.title} — Full Screen`}
                             style={{ minHeight: '100vh', minWidth: '100vw' }}
                           />
                         </DialogContent>
@@ -117,7 +153,9 @@ const Warehouse = () => {
                         <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
                           <div className="w-full h-full overflow-hidden">
                             <iframe
-                              src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}                              frameBorder={0}
+                              key={`${dashboard.id}-fullscreen-${refreshSeed}`}
+                              src={iframeSrc}
+                              frameBorder={0}
                               allowFullScreen
                               className="w-full h-full"
                               title={`${dashboard.title} Dashboard - Full Screen`}
@@ -138,30 +176,33 @@ const Warehouse = () => {
                 <p className="text-[11px] sm:text-xs text-muted-foreground group-hover:text-foreground transition-colors mt-1.5 sm:mt-2">
                   {dashboard.description}
                 </p>
+                <p className="text-[10px] sm:text-[11px] text-coral font-medium mt-0.5">
+                  Window: {dashboard.timeWindow}
+                </p>
               </CardHeader>
 
               <CardContent className="relative z-10 p-3.5 sm:p-4 min-h-[24rem] lg:min-h-[24rem] xl:min-h-[26rem]">
                 {/* BODY: special rendering for Churn (Plotly image only), others unchanged */}
-                {isChurn ? (
+                {isExpiredReport ? (
                   <div className="relative w-full h-[24rem] sm:h-[30rem] lg:h-[24rem] xl:h-[26rem] border-2 border-dashed border-coral/25 rounded-lg bg-coral/5 overflow-hidden hover:border-coral/40 transition-colors">
                     <div className="absolute inset-0 rounded-lg overflow-hidden">
                       <div className="sm:hidden h-full w-full">
                         <iframe
-                          key={churnRefreshKey}
-                          src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}
+                          key={`${dashboard.id}-mobile-${refreshSeed}`}
+                          src={iframeSrc}
                           frameBorder={0}
                           className="h-full w-full rounded-lg"
-                          title="Churn Analysis Chart"
+                          title={`${dashboard.title} Chart`}
                           style={{ minWidth: "100%", minHeight: 480 }}
                         />
                       </div>
                       <div className="hidden sm:block h-full w-full">
                         <iframe
-                          key={`${churnRefreshKey}-desktop`}
-                          src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}
+                          key={`${dashboard.id}-desktop-${refreshSeed}`}
+                          src={iframeSrc}
                           frameBorder={0}
                           className="h-full w-full rounded-lg"
-                          title="Churn Analysis Chart"
+                          title={`${dashboard.title} Chart`}
                           style={{ minHeight: 320 }}
                         />
                       </div>
@@ -172,7 +213,8 @@ const Warehouse = () => {
                     <div className="absolute inset-0 rounded-lg overflow-hidden">
                       <div className="sm:hidden h-full w-full">
                         <iframe
-                          src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}
+                          key={`${dashboard.id}-mobile-${refreshSeed}`}
+                          src={iframeSrc}
                           frameBorder={0}
                           allowFullScreen
                           className="h-full w-full rounded-lg"
@@ -182,7 +224,8 @@ const Warehouse = () => {
                       </div>
                       <div className="hidden sm:block h-full w-full">
                         <iframe
-                          src={`${API_ENDPOINTS.EXPIRED_USERS}?ts=${churnRefreshKey}`}
+                          key={`${dashboard.id}-desktop-${refreshSeed}`}
+                          src={iframeSrc}
                           frameBorder={0}
                           allowFullScreen
                           className="h-full w-full rounded-lg transition-opacity group-hover/iframe:opacity-90"

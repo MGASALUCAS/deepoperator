@@ -219,10 +219,10 @@ const Dashboard = () => {
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow cursor-pointer border-gold/20 hover:border-gold/40">
-          <CardContent className="p-3 sm:p-5 text-center space-y-2">
-            <Bell className="w-5 h-5 sm:w-7 sm:h-7 mx-auto text-gold" />
-            <h3 className="font-semibold text-xs sm:text-sm">Operator Panel</h3>
-            <p className="text-[11px] sm:text-xs text-muted-foreground">
+          <CardContent className="p-3 sm:p-5 lg:p-3.5 text-center space-y-2 lg:space-y-1.5">
+            <Bell className="w-5 h-5 sm:w-7 sm:h-7 lg:w-5 lg:h-5 mx-auto text-gold" />
+            <h3 className="font-semibold text-xs sm:text-sm lg:text-xs">Operator Panel</h3>
+            <p className="text-[11px] sm:text-xs lg:text-[10px] text-muted-foreground">
               Automate notifications & engagement
             </p>
           </CardContent>

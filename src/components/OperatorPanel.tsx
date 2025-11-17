@@ -261,8 +261,8 @@ const OperatorPanel = () => {
       {/* Professional Operator Panel Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 sm:gap-3.5">
         <div>
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight" style={{ color: "#FF6B6B" }}>Operator Panel</h1>
-          <p className="text-xs sm:text-sm lg:text-sm text-muted-foreground">
+          <h1 className="text-lg sm:text-xl lg:text-lg font-bold tracking-tight" style={{ color: "#FF6B6B" }}>Operator Panel</h1>
+          <p className="text-xs sm:text-sm lg:text-xs text-muted-foreground">
             Intelligent notification automation and engagement engine
           </p>
         </div>

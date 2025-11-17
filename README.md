@@ -60,6 +60,11 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Reports API Integration
+
+The dashboard embeds Plotly charts returned by the Kuza Reports API. Refer to
+[`REPORTS_API.md`](./REPORTS_API.md) for endpoint behavior, time windows, and usage tips.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/ccfb42b4-2108-4d4b-9674-ad621396a287) and click on Share -> Publish.

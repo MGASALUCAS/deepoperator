@@ -9,17 +9,25 @@
 
 export const API_BASE_URL = 'https://api.swahilies.quantumintelligence.co.tz';
 
+const env = typeof import.meta !== "undefined" ? import.meta.env : undefined;
+const REPORT_REGISTRATIONS_PATH =
+  env?.VITE_REPORT_REGISTRATIONS_PATH || "/reports/registrations-and-paid-same-month";
+const REPORT_SUBSCRIPTIONS_PATH =
+  env?.VITE_REPORT_SUBSCRIPTIONS_PATH || "/reports/subscriptions-live-breakdown";
+
 // API Endpoints
 export const API_ENDPOINTS = {
   // Metrics endpoints
   METRICS: (endpointNum: number) => `${API_BASE_URL}/api/end${endpointNum}`,
-  
+
   // Notification endpoints
   NOTIFY: `${API_BASE_URL}/api/notify`,
-  
+
   // Reports endpoints
   EXPIRED_USERS: `${API_BASE_URL}/reports/expired-users`,
-  
+  REGISTRATIONS_AND_PAID_SAME_MONTH: `${API_BASE_URL}${REPORT_REGISTRATIONS_PATH}`,
+  SUBSCRIPTIONS_LIVE_BREAKDOWN: `${API_BASE_URL}${REPORT_SUBSCRIPTIONS_PATH}`,
+
   // Health check
   HEALTH: `${API_BASE_URL}/api/health`,
 } as const;
@@ -35,6 +43,6 @@ export const getApiBaseUrl = () => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  
+
   return API_BASE_URL;
 };

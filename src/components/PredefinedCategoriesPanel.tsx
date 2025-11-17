@@ -144,7 +144,7 @@ export default function PredefinedCategoriesPanel() {
   return (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3 flex-wrap">
-        <h2 className="text-xl font-bold text-coral">Predefined Categories</h2>
+        <h2 className="text-lg sm:text-xl lg:text-lg font-bold text-coral">Predefined Categories</h2>
         <Button
           variant="outline"
           size="sm"
@@ -161,7 +161,7 @@ export default function PredefinedCategoriesPanel() {
           <button
             key={cat.id}
             onClick={() => setActiveCatId(cat.id)}
-            className={`rounded-xl border-2 min-h-[60px] bg-white flex flex-col items-center justify-center text-center text-sm font-medium px-2 py-6 relative transition-all hover:shadow-lg ${
+            className={`rounded-xl border-2 min-h-[60px] lg:min-h-[52px] bg-white flex flex-col items-center justify-center text-center text-sm lg:text-xs font-medium px-2 py-6 lg:py-4 relative transition-all hover:shadow-lg ${
               activeCatId === cat.id
                 ? "border-coral scale-105 ring-2 ring-coral"
                 : "border-gray-200"
@@ -176,7 +176,7 @@ export default function PredefinedCategoriesPanel() {
               />
             </span>
             <span>{cat.name}</span>
-            <span className="absolute bottom-2 right-3 text-xs text-muted-foreground">
+            <span className="absolute bottom-2 right-3 text-xs lg:text-[11px] text-muted-foreground">
               {cat.messages.length}
             </span>
           </button>

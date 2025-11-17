@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import HeroNavigation from "../components/HeroNavigation";
 import DesktopSidebar from "../components/DesktopSidebar";
@@ -12,8 +12,23 @@ import OperatorPanel from "../components/OperatorPanel";
 import FeedbackLoop from "../components/FeedbackLoop";
 import Settings from "../components/Settings";
 
+const STORAGE_KEY = "deepoperator-active-section";
+
+const getInitialSection = () => {
+  if (typeof window !== "undefined") {
+    return window.localStorage.getItem(STORAGE_KEY) || "dashboard";
+  }
+  return "dashboard";
+};
+
 const Index = () => {
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState<string>(getInitialSection);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, activeSection);
+    }
+  }, [activeSection]);
 
   const renderActiveSection = () => {
     switch (activeSection) {

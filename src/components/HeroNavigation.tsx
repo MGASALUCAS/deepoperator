@@ -2,18 +2,20 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { 
-  BarChart3, 
-  Database, 
-  Bell, 
-  MessageCircle, 
+import {
+  BarChart3,
+  Database,
+  Bell,
+  MessageCircle,
   Settings,
   Menu,
   X,
   TrendingUp,
   Zap,
-  Heart
+  Heart,
+  LogOut
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 interface HeroNavigationProps {
   activeSection: string;
@@ -23,6 +25,7 @@ interface HeroNavigationProps {
 const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { logout } = useAuth();
 
   // Handle scroll effect for navbar
   useEffect(() => {
@@ -91,14 +94,14 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
           }}
           className={cn(
             "w-full flex items-center gap-4 p-4 rounded-2xl transition-smooth text-left",
-            isActive 
-              ? "bg-gradient-to-r from-coral/20 to-mint/20 border border-coral/30 text-coral shadow-medium" 
+            isActive
+              ? "bg-gradient-to-r from-coral/20 to-mint/20 border border-coral/30 text-coral shadow-medium"
               : "hover:bg-gradient-glass hover:shadow-soft text-foreground"
           )}
         >
           <div className={cn(
             "p-3 rounded-xl shadow-soft",
-            isActive 
+            isActive
               ? `bg-gradient-to-br ${item.gradient} text-white shadow-magical`
               : "bg-muted/50 text-muted-foreground"
           )}>
@@ -119,14 +122,14 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
         onClick={() => setActiveSection(item.id)}
         className={cn(
           "relative flex flex-col items-center gap-2 p-4 rounded-2xl transition-smooth group",
-          isActive 
-            ? "bg-gradient-to-br from-coral/10 to-mint/10 border border-coral/30 shadow-medium" 
+          isActive
+            ? "bg-gradient-to-br from-coral/10 to-mint/10 border border-coral/30 shadow-medium"
             : "hover:bg-gradient-glass hover:shadow-soft"
         )}
       >
         <div className={cn(
           "p-3 rounded-xl shadow-soft transition-smooth group-hover:shadow-medium",
-          isActive 
+          isActive
             ? `bg-gradient-to-br ${item.gradient} text-white shadow-magical`
             : "bg-muted/50 text-muted-foreground group-hover:bg-muted"
         )}>
@@ -143,7 +146,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
             {item.description}
           </div>
         </div>
-        
+
         {isActive && (
           <motion.div
             layoutId="activeIndicator"
@@ -170,7 +173,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
         <div className="container-responsive">
           <div className="flex items-center justify-between py-4">
             {/* Logo & Brand */}
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4"
               whileHover={{ scale: 1.02 }}
             >
@@ -259,7 +262,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
               className="absolute inset-0 bg-background/95 backdrop-blur-xl"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            
+
             <motion.div
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -280,16 +283,25 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
                     </motion.div>
                   ))}
                 </div>
-                
+
                 <motion.div
                   initial={{ y: 50, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="mt-8 pt-8 border-t border-border"
+                  className="mt-8 pt-8 border-t border-border space-y-3"
                 >
                   <Button variant="hero" size="lg" className="w-full">
                     <TrendingUp className="w-5 h-5" />
                     Explore Insights
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-red-200 text-red-500 hover:bg-red-50"
+                    onClick={logout}
+                  >
+                    <LogOut className="w-5 h-5" />
+                    Logout
                   </Button>
                 </motion.div>
               </div>
@@ -304,7 +316,7 @@ const HeroNavigation = ({ activeSection, setActiveSection }: HeroNavigationProps
           {navigationItems.slice(0, 4).map((item) => {
             const isActive = activeSection === item.id;
             const Icon = item.icon;
-            
+
             return (
               <motion.button
                 key={item.id}
