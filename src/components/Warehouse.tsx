@@ -52,6 +52,33 @@ const Warehouse = () => {
       timeWindow: "Current month"
     },
     {
+      id: "subscriptions-over-time",
+      title: "Subscriptions Over Time",
+      description: "Current month paid transactions by amount and subscription type.",
+      lastUpdated: "Live month-to-date",
+      endpoint: API_ENDPOINTS.SUBSCRIPTIONS_OVER_TIME,
+      timeWindow: "Current month",
+      refreshable: true
+    },
+    {
+      id: "subscriptions-ending",
+      title: "Subscriptions Ending Over Time",
+      description: "Forecast of paid users expiring each month in the future window.",
+      lastUpdated: "Updated hourly",
+      endpoint: `${API_ENDPOINTS.SUBSCRIPTIONS_ENDING_OVER_TIME}?months=12`,
+      timeWindow: "Next 12 months",
+      refreshable: true
+    },
+    {
+      id: "active-paid-business-nature",
+      title: "Active Paid by Business Nature",
+      description: "Active subscriptions grouped by business nature with min/top filters.",
+      lastUpdated: "On demand",
+      endpoint: `${API_ENDPOINTS.ACTIVE_PAID_BY_BUSINESS_NATURE}?min=1&top=10`,
+      timeWindow: "Current active base",
+      refreshable: true
+    },
+    {
       id: "executive-snapshot",
       title: "Executive Snapshot",
       description: "Quick reference view for leadership dashboards.",
