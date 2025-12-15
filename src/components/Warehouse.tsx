@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { ChartBar, Filter, Settings, Maximize, RefreshCcw } from "lucide-react";
+import { ChartBar, Filter, Settings, Maximize, RefreshCcw, X } from "lucide-react";
 import { API_ENDPOINTS } from "../lib/config";
 
 type ReportDashboard = {
@@ -24,6 +24,19 @@ const Warehouse = () => {
   });
 
   const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
+  const [openFullscreenId, setOpenFullscreenId] = useState<string | null>(null);
+
+  // Hide SessionIndicator when any fullscreen is open
+  useEffect(() => {
+    if (openFullscreenId) {
+      document.body.classList.add('fullscreen-dialog-open');
+    } else {
+      document.body.classList.remove('fullscreen-dialog-open');
+    }
+    return () => {
+      document.body.classList.remove('fullscreen-dialog-open');
+    };
+  }, [openFullscreenId]);
 
   const dashboards: ReportDashboard[] = [
     {
@@ -83,8 +96,26 @@ const Warehouse = () => {
       title: "Executive Snapshot",
       description: "Quick reference view for leadership dashboards.",
       lastUpdated: "Moments ago",
-      endpoint: API_ENDPOINTS.EXPIRED_USERS,
+      endpoint: API_ENDPOINTS.SUBSCRIPTIONS_LIVE_BREAKDOWN,
       timeWindow: "Key KPI"
+    },
+    {
+      id: "inactive-paid-active-by-regyear",
+      title: "Inactive Paid Active by Registration Year",
+      description: "Active and inactive paid users segmented by registration year.",
+      lastUpdated: "Updated hourly",
+      endpoint: API_ENDPOINTS.INACTIVE_PAID_ACTIVE_BY_REGYEAR,
+      timeWindow: "By registration year",
+      refreshable: true
+    },
+    {
+      id: "inactive-paid-active-ending-soon-by-regyear-simple",
+      title: "Ending Soon by Registration Year",
+      description: "Paid subscriptions ending soon, grouped by registration year.",
+      lastUpdated: "Updated hourly",
+      endpoint: API_ENDPOINTS.INACTIVE_PAID_ACTIVE_ENDING_SOON_BY_REGYEAR_SIMPLE,
+      timeWindow: "Upcoming expirations",
+      refreshable: true
     }
   ];
 
@@ -149,36 +180,75 @@ const Warehouse = () => {
 
                     {/* FULL SCREEN: Churn uses your Flask Plotly chart; others keep PowerBI */}
                     {isExpiredReport ? (
-                      <Dialog>
+                      <Dialog
+                        open={openFullscreenId === dashboard.id}
+                        onOpenChange={(open) => setOpenFullscreenId(open ? dashboard.id : null)}
+                      >
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5 text-xs sm:text-sm">
                             <Maximize className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
                             <span className="hidden sm:inline">Full Screen</span>
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
+                        <DialogContent
+                          className="fullscreen-dialog-content max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none [&>button[data-radix-dialog-close]]:hidden relative"
+                          onEscapeKeyDown={() => setOpenFullscreenId(null)}
+                          onInteractOutside={(e) => e.preventDefault()}
+                        >
+                          <DialogTitle className="sr-only">{dashboard.title} — Full Screen</DialogTitle>
+                          {/* Close button - positioned on the right */}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setOpenFullscreenId(null)}
+                            className="!absolute top-3 right-3 sm:top-4 sm:right-4 !z-[99999] !bg-white dark:!bg-gray-900 !border-2 !border-gray-300 dark:!border-gray-600 !text-gray-900 dark:!text-gray-100 !h-9 !w-9 sm:!h-10 sm:!w-10 !shadow-xl !rounded-md transition-all duration-200 hover:!bg-red-500 hover:!text-white hover:!border-red-500 hover:!scale-110 active:!scale-95 pointer-events-auto"
+                            title="Close fullscreen (Press ESC)"
+                            aria-label="Close fullscreen"
+                            style={{ zIndex: 99999 }}
+                          >
+                            <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </Button>
                           {/* Just the Plotly graph, edge-to-edge */}
                           <iframe
                             key={`${dashboard.id}-fullscreen-${refreshSeed}`}
                             src={iframeSrc}
                             frameBorder={0}
                             allowFullScreen
-                            className="w-full h-full"
+                            className="w-full h-full absolute inset-0"
                             title={`${dashboard.title} — Full Screen`}
-                            style={{ minHeight: '100vh', minWidth: '100vw' }}
                           />
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <Dialog>
+                      <Dialog
+                        open={openFullscreenId === dashboard.id}
+                        onOpenChange={(open) => setOpenFullscreenId(open ? dashboard.id : null)}
+                      >
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm" className="border-coral/20 text-coral hover:bg-coral/5 text-xs sm:text-sm">
                             <Maximize className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
                             <span className="hidden sm:inline">Full Screen</span>
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none">
-                          <div className="w-full h-full overflow-hidden">
+                        <DialogContent
+                          className="fullscreen-dialog-content max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] p-0 m-0 rounded-none border-none [&>button[data-radix-dialog-close]]:hidden relative"
+                          onEscapeKeyDown={() => setOpenFullscreenId(null)}
+                          onInteractOutside={(e) => e.preventDefault()}
+                        >
+                          <DialogTitle className="sr-only">{dashboard.title} Dashboard — Full Screen</DialogTitle>
+                          {/* Close button - positioned on the right */}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setOpenFullscreenId(null)}
+                            className="!absolute top-3 right-3 sm:top-4 sm:right-4 !z-[99999] !bg-white dark:!bg-gray-900 !border-2 !border-gray-300 dark:!border-gray-600 !text-gray-900 dark:!text-gray-100 !h-9 !w-9 sm:!h-10 sm:!w-10 !shadow-xl !rounded-md transition-all duration-200 hover:!bg-red-500 hover:!text-white hover:!border-red-500 hover:!scale-110 active:!scale-95 pointer-events-auto"
+                            title="Close fullscreen (Press ESC)"
+                            aria-label="Close fullscreen"
+                            style={{ zIndex: 99999 }}
+                          >
+                            <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </Button>
+                          <div className="w-full h-full overflow-hidden absolute inset-0">
                             <iframe
                               key={`${dashboard.id}-fullscreen-${refreshSeed}`}
                               src={iframeSrc}
@@ -186,7 +256,6 @@ const Warehouse = () => {
                               allowFullScreen
                               className="w-full h-full"
                               title={`${dashboard.title} Dashboard - Full Screen`}
-                              style={{ minHeight: '100vh', minWidth: '100vw' }}
                             />
                           </div>
                         </DialogContent>
