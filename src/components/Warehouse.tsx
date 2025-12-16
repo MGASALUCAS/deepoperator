@@ -92,14 +92,6 @@ const Warehouse = () => {
       refreshable: true
     },
     {
-      id: "executive-snapshot",
-      title: "Executive Snapshot",
-      description: "Quick reference view for leadership dashboards.",
-      lastUpdated: "Moments ago",
-      endpoint: API_ENDPOINTS.SUBSCRIPTIONS_LIVE_BREAKDOWN,
-      timeWindow: "Key KPI"
-    },
-    {
       id: "inactive-paid-active-by-regyear",
       title: "Inactive Paid Active by Registration Year",
       description: "Active and inactive paid users segmented by registration year.",
