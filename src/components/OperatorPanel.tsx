@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -6,7 +6,11 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { Badge } from "./ui/badge";
-import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Send } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Calendar } from "./ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Send, CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
 import CategoryManager from "./CategoryManager";
 import MessageCategoriesPanel, { MessageCategory } from "./MessageCategoriesPanel";
 import PredefinedCategoriesPanel from "./PredefinedCategoriesPanel";
@@ -86,6 +90,52 @@ const initialRules: AutomationRule[] = [
   // Add more demo/future-proof rules here as needed.
 ];
 
+interface BusinessData {
+  id: number;
+  registered: string;
+  businessName: string;
+  subscriptionEnd: string;
+  phoneNumber: string;
+}
+
+const initialBusinesses: BusinessData[] = [
+  {
+    id: 1,
+    registered: "2024-01-15",
+    businessName: "Tech Solutions Ltd",
+    subscriptionEnd: "2024-12-31",
+    phoneNumber: "+254 712 345 678"
+  },
+  {
+    id: 2,
+    registered: "2024-02-20",
+    businessName: "African Logistics Co.",
+    subscriptionEnd: "2024-11-15",
+    phoneNumber: "+254 723 456 789"
+  },
+  {
+    id: 3,
+    registered: "2024-03-10",
+    businessName: "Green Energy Corp",
+    subscriptionEnd: "2024-10-20",
+    phoneNumber: "+254 734 567 890"
+  },
+  {
+    id: 4,
+    registered: "2024-04-05",
+    businessName: "Digital Marketing Hub",
+    subscriptionEnd: "2024-09-30",
+    phoneNumber: "+254 745 678 901"
+  },
+  {
+    id: 5,
+    registered: "2024-05-18",
+    businessName: "AgriTech Solutions",
+    subscriptionEnd: "2024-08-25",
+    phoneNumber: "+254 756 789 012"
+  }
+];
+
 const OperatorPanel = () => {
   const { toast } = useToast();
   const [categories, setCategories] = useState<MessageCategory[]>(initialCategories);
@@ -97,6 +147,24 @@ const OperatorPanel = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [messageTitle, setMessageTitle] = useState("");
   const [messageContent, setMessageContent] = useState("");
+
+  // Business data and filtering
+  const [businesses, setBusinesses] = useState<BusinessData[]>(initialBusinesses);
+  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
+  const [filteredBusinesses, setFilteredBusinesses] = useState<BusinessData[]>(initialBusinesses);
+
+  // Filter businesses by subscription end date
+  useEffect(() => {
+    if (filterDate) {
+      const formattedFilterDate = format(filterDate, "yyyy-MM-dd");
+      const filtered = businesses.filter(business =>
+        business.subscriptionEnd === formattedFilterDate
+      );
+      setFilteredBusinesses(filtered);
+    } else {
+      setFilteredBusinesses(businesses);
+    }
+  }, [filterDate, businesses]);
 
 
   // --- Rules handlers for the AutomationRulesPanel ---
@@ -345,6 +413,123 @@ const OperatorPanel = () => {
                     </>
                   )}
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Notifications Table */}
+          <Card>
+            <CardHeader className="p-2 sm:p-3 md:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle className="text-sm sm:text-base md:text-lg">Business Notifications</CardTitle>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs sm:text-sm font-medium">Filter by Subscription End:</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={`w-[140px] justify-start text-left font-normal ${
+                          !filterDate && "text-muted-foreground"
+                        }`}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filterDate ? format(filterDate, "yyyy-MM-dd") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={filterDate}
+                        onSelect={setFilterDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {filterDate && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFilterDate(undefined)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-2 sm:p-3 md:p-4">
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm px-2 py-2">Registered</TableHead>
+                      <TableHead className="text-xs sm:text-sm px-2 py-2">Business Name</TableHead>
+                      <TableHead className="text-xs sm:text-sm px-2 py-2">Subscription End</TableHead>
+                      <TableHead className="text-xs sm:text-sm px-2 py-2">Phone Number</TableHead>
+                      <TableHead className="text-center text-xs sm:text-sm px-2 py-2">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredBusinesses.length > 0 ? (
+                      filteredBusinesses.map((business) => (
+                        <TableRow key={business.id}>
+                          <TableCell className="text-xs px-2 py-2">{business.registered}</TableCell>
+                          <TableCell className="text-xs px-2 py-2">{business.businessName}</TableCell>
+                          <TableCell className="text-xs px-2 py-2">{business.subscriptionEnd}</TableCell>
+                          <TableCell className="text-xs px-2 py-2">{business.phoneNumber}</TableCell>
+                          <TableCell className="px-2 py-2">
+                            <div className="flex gap-1 justify-center">
+                              <Button size="sm" variant="outline" className="text-xs h-7 px-2">
+                                Send
+                              </Button>
+                              <Button size="sm" variant="secondary" className="text-xs h-7 px-2">
+                                Resend
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                          No businesses found for the selected date.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+              </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {filteredBusinesses.length > 0 ? (
+                  filteredBusinesses.map((business) => (
+                    <div key={business.id} className="border rounded-lg p-3 bg-muted/20">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-sm">{business.businessName}</h4>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="text-xs h-7 px-2">
+                            Send
+                          </Button>
+                          <Button size="sm" variant="secondary" className="text-xs h-7 px-2">
+                            Resend
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div><span className="font-medium">Registered:</span> {business.registered}</div>
+                        <div><span className="font-medium">Expires:</span> {business.subscriptionEnd}</div>
+                        <div className="col-span-2"><span className="font-medium">Phone:</span> {business.phoneNumber}</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="border rounded-lg p-4 bg-muted/20 text-center">
+                    <p className="text-muted-foreground">No businesses found for the selected date.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
