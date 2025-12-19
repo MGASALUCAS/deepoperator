@@ -9,7 +9,8 @@ import { Badge } from "./ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Calendar } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Send, CalendarIcon, X } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
+import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Send, CalendarIcon, X, Users, RefreshCw, Filter, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import CategoryManager from "./CategoryManager";
 import MessageCategoriesPanel, { MessageCategory } from "./MessageCategoriesPanel";
@@ -90,51 +91,29 @@ const initialRules: AutomationRule[] = [
   // Add more demo/future-proof rules here as needed.
 ];
 
-interface BusinessData {
-  id: number;
-  registered: string;
-  businessName: string;
-  subscriptionEnd: string;
-  phoneNumber: string;
+
+interface InactiveUserData {
+  Registered: string;
+  "Business Name": string;
+  "Subscription end": string;
+  "Phone Number": string;
+  "Send ( Resend )": string;
 }
 
-const initialBusinesses: BusinessData[] = [
-  {
-    id: 1,
-    registered: "2024-01-15",
-    businessName: "Tech Solutions Ltd",
-    subscriptionEnd: "2024-12-31",
-    phoneNumber: "+254 712 345 678"
-  },
-  {
-    id: 2,
-    registered: "2024-02-20",
-    businessName: "African Logistics Co.",
-    subscriptionEnd: "2024-11-15",
-    phoneNumber: "+254 723 456 789"
-  },
-  {
-    id: 3,
-    registered: "2024-03-10",
-    businessName: "Green Energy Corp",
-    subscriptionEnd: "2024-10-20",
-    phoneNumber: "+254 734 567 890"
-  },
-  {
-    id: 4,
-    registered: "2024-04-05",
-    businessName: "Digital Marketing Hub",
-    subscriptionEnd: "2024-09-30",
-    phoneNumber: "+254 745 678 901"
-  },
-  {
-    id: 5,
-    registered: "2024-05-18",
-    businessName: "AgriTech Solutions",
-    subscriptionEnd: "2024-08-25",
-    phoneNumber: "+254 756 789 012"
-  }
-];
+interface InactiveUsersResponse {
+  filters: {
+    days_without_login: number;
+    subscription_end_start?: string;
+    subscription_end_end?: string;
+    require_phone: boolean;
+  };
+  count: number;
+  total: number;
+  page: number;
+  limit: number;
+  has_more: boolean;
+  rows: InactiveUserData[];
+}
 
 const OperatorPanel = () => {
   const { toast } = useToast();
@@ -148,24 +127,95 @@ const OperatorPanel = () => {
   const [messageTitle, setMessageTitle] = useState("");
   const [messageContent, setMessageContent] = useState("");
 
-  // Business data and filtering
-  const [businesses, setBusinesses] = useState<BusinessData[]>(initialBusinesses);
-  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
-  const [filteredBusinesses, setFilteredBusinesses] = useState<BusinessData[]>(initialBusinesses);
+  // Inactive users data and filtering
+  const [inactiveUsers, setInactiveUsers] = useState<InactiveUserData[]>([]);
+  const [inactiveUsersLoading, setInactiveUsersLoading] = useState(false);
+  const [inactiveUsersFilters, setInactiveUsersFilters] = useState({
+    days: 15,
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
+    requirePhone: true,
+  });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Filter businesses by subscription end date
-  useEffect(() => {
-    if (filterDate) {
-      const formattedFilterDate = format(filterDate, "yyyy-MM-dd");
-      const filtered = businesses.filter(business =>
-        business.subscriptionEnd === formattedFilterDate
-      );
-      setFilteredBusinesses(filtered);
-    } else {
-      setFilteredBusinesses(businesses);
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    total: 0,
+    limit: 100,
+    hasMore: false,
+  });
+
+  // Fetch inactive paid users
+  const fetchInactiveUsers = async (page: number = 1) => {
+    setInactiveUsersLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('days', inactiveUsersFilters.days.toString());
+      params.append('limit', pagination.limit.toString());
+      params.append('page', page.toString());
+
+      if (inactiveUsersFilters.startDate) {
+        params.append('start', format(inactiveUsersFilters.startDate, 'yyyy-MM-dd'));
+      }
+      if (inactiveUsersFilters.endDate) {
+        params.append('end', format(inactiveUsersFilters.endDate, 'yyyy-MM-dd'));
+      }
+      params.append('require_phone', inactiveUsersFilters.requirePhone.toString());
+
+      const response = await fetch(`${API_ENDPOINTS.INACTIVE_PAID_USERS}?${params}`);
+      const data: InactiveUsersResponse = await response.json();
+
+      if (response.ok) {
+        setInactiveUsers(data.rows);
+        setPagination(prev => ({
+          ...prev,
+          currentPage: data.page,
+          total: data.total,
+          hasMore: data.has_more,
+        }));
+
+        toast({
+          title: "Inactive Users Loaded",
+          description: `Found ${data.count} inactive paid users on page ${data.page} (Total: ${data.total}).`,
+        });
+      } else {
+        toast({
+          title: "Error Loading Inactive Users",
+          description: data.error || "Failed to fetch inactive users data",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching inactive users:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to the server",
+        variant: "destructive"
+      });
+    } finally {
+      setInactiveUsersLoading(false);
     }
-  }, [filterDate, businesses]);
+  };
 
+  // Pagination handlers
+  const handleNextPage = () => {
+    if (pagination.hasMore) {
+      fetchInactiveUsers(pagination.currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (pagination.currentPage > 1) {
+      fetchInactiveUsers(pagination.currentPage - 1);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && (page <= Math.ceil(pagination.total / pagination.limit) || pagination.hasMore)) {
+      fetchInactiveUsers(page);
+    }
+  };
 
   // --- Rules handlers for the AutomationRulesPanel ---
   const handleToggleRule = (id: number, newStatus: "active" | "paused") => {
@@ -417,120 +467,302 @@ const OperatorPanel = () => {
             </CardContent>
           </Card>
 
-          {/* Business Notifications Table */}
+          {/* Inactive Paid Users Section */}
           <Card>
-            <CardHeader className="p-2 sm:p-3 md:p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <CardTitle className="text-sm sm:text-base md:text-lg">Business Notifications</CardTitle>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs sm:text-sm font-medium">Filter by Subscription End:</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={`w-[140px] justify-start text-left font-normal ${
-                          !filterDate && "text-muted-foreground"
-                        }`}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {filterDate ? format(filterDate, "yyyy-MM-dd") : "Select date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={filterDate}
-                        onSelect={setFilterDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {filterDate && (
+            <CardHeader className="p-3 sm:p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm sm:text-base md:text-lg flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Inactive Paid Users
+                    {inactiveUsers.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {inactiveUsers.length}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => fetchInactiveUsers(1)}
+                      disabled={inactiveUsersLoading}
+                      size="sm"
+                      className="h-8"
+                    >
+                      {inactiveUsersLoading ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3 h-3" />
+                      )}
+                    </Button>
+                    <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <Filter className="w-3 h-3 mr-1" />
+                          Filters
+                          <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </Collapsible>
+                  </div>
+                </div>
+
+                {/* Quick Filters Row */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">Inactive for:</span>
+                    <Input
+                      type="number"
+                      value={inactiveUsersFilters.days}
+                      onChange={(e) => {
+                        setInactiveUsersFilters(prev => ({
+                          ...prev,
+                          days: parseInt(e.target.value) || 15
+                        }));
+                        setPagination(prev => ({ ...prev, currentPage: 1 }));
+                      }}
+                      className="w-16 h-7 text-xs"
+                      min="1"
+                      max="365"
+                    />
+                    <span className="text-xs text-muted-foreground">days</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">Phone:</span>
+                    <Switch
+                      checked={inactiveUsersFilters.requirePhone}
+                      onCheckedChange={(checked) => {
+                        setInactiveUsersFilters(prev => ({
+                          ...prev,
+                          requirePhone: checked
+                        }));
+                        setPagination(prev => ({ ...prev, currentPage: 1 }));
+                      }}
+                      className="scale-75"
+                    />
+                    <span className="text-xs text-muted-foreground">Required</span>
+                  </div>
+
+                  {(inactiveUsersFilters.startDate || inactiveUsersFilters.endDate || inactiveUsersFilters.days !== 15 || !inactiveUsersFilters.requirePhone) && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setFilterDate(undefined)}
-                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        setInactiveUsersFilters({
+                          days: 15,
+                          startDate: undefined,
+                          endDate: undefined,
+                          requirePhone: true,
+                        });
+                        setPagination(prev => ({ ...prev, currentPage: 1 }));
+                      }}
+                      className="h-7 px-2 text-xs"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="w-3 h-3 mr-1" />
+                      Clear
                     </Button>
                   )}
                 </div>
+
+                {/* Advanced Filters */}
+                <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+                  <CollapsibleContent className="space-y-3">
+                    <div className="border-t pt-3">
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Subscription End Date Range</h4>
+                      <div className="flex gap-2 flex-wrap">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={`justify-start text-left font-normal text-xs h-8 px-2 ${
+                                !inactiveUsersFilters.startDate && "text-muted-foreground"
+                              }`}
+                            >
+                              <CalendarIcon className="mr-1 h-3 w-3" />
+                              {inactiveUsersFilters.startDate ? format(inactiveUsersFilters.startDate, "MMM dd") : "Start"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={inactiveUsersFilters.startDate}
+                              onSelect={(date) => {
+                                setInactiveUsersFilters(prev => ({ ...prev, startDate: date }));
+                                setPagination(prev => ({ ...prev, currentPage: 1 }));
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={`justify-start text-left font-normal text-xs h-8 px-2 ${
+                                !inactiveUsersFilters.endDate && "text-muted-foreground"
+                              }`}
+                            >
+                              <CalendarIcon className="mr-1 h-3 w-3" />
+                              {inactiveUsersFilters.endDate ? format(inactiveUsersFilters.endDate, "MMM dd") : "End"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={inactiveUsersFilters.endDate}
+                              onSelect={(date) => {
+                                setInactiveUsersFilters(prev => ({ ...prev, endDate: date }));
+                                setPagination(prev => ({ ...prev, currentPage: 1 }));
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </CardHeader>
-            <CardContent className="p-2 sm:p-3 md:p-4">
+            <CardContent className="p-3 sm:p-4">
               {/* Desktop Table View */}
               <div className="hidden md:block">
+                <div className="rounded-md border">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm px-2 py-2">Registered</TableHead>
-                      <TableHead className="text-xs sm:text-sm px-2 py-2">Business Name</TableHead>
-                      <TableHead className="text-xs sm:text-sm px-2 py-2">Subscription End</TableHead>
-                      <TableHead className="text-xs sm:text-sm px-2 py-2">Phone Number</TableHead>
-                      <TableHead className="text-center text-xs sm:text-sm px-2 py-2">Actions</TableHead>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="text-xs font-medium px-3 py-2">Business</TableHead>
+                        <TableHead className="text-xs font-medium px-3 py-2">Registered</TableHead>
+                        <TableHead className="text-xs font-medium px-3 py-2">Expires</TableHead>
+                        <TableHead className="text-xs font-medium px-3 py-2">Phone</TableHead>
+                        <TableHead className="text-center text-xs font-medium px-3 py-2">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredBusinesses.length > 0 ? (
-                      filteredBusinesses.map((business) => (
-                        <TableRow key={business.id}>
-                          <TableCell className="text-xs px-2 py-2">{business.registered}</TableCell>
-                          <TableCell className="text-xs px-2 py-2">{business.businessName}</TableCell>
-                          <TableCell className="text-xs px-2 py-2">{business.subscriptionEnd}</TableCell>
-                          <TableCell className="text-xs px-2 py-2">{business.phoneNumber}</TableCell>
-                          <TableCell className="px-2 py-2">
-                            <div className="flex gap-1 justify-center">
-                              <Button size="sm" variant="outline" className="text-xs h-7 px-2">
-                                Send
-                              </Button>
-                              <Button size="sm" variant="secondary" className="text-xs h-7 px-2">
-                                Resend
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
-                          No businesses found for the selected date.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
+                      {inactiveUsers.length > 0 ? (
+                        inactiveUsers.map((user, index) => (
+                          <TableRow key={index} className="hover:bg-muted/30">
+                            <TableCell className="font-medium px-3 py-2 text-sm">{user["Business Name"]}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground px-3 py-2">
+                              {new Date(user.Registered).toLocaleDateString()}
+                    </TableCell>
+                            <TableCell className="text-xs px-3 py-2">
+                              {new Date(user["Subscription end"]).toLocaleDateString()}
+                    </TableCell>
+                            <TableCell className="text-xs font-mono px-3 py-2">{user["Phone Number"]}</TableCell>
+                            <TableCell className="px-3 py-2">
+                      <div className="flex gap-1 justify-center">
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-xs">
+                          Send
+                        </Button>
+                                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
+                          Resend
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                        ))
+                      ) : (
+                  <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            {inactiveUsersLoading ? (
+                              <div className="flex items-center justify-center gap-2">
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                Loading inactive users...
+                      </div>
+                            ) : (
+                              "No inactive users found. Click refresh to load data."
+                            )}
+                    </TableCell>
+                  </TableRow>
+                      )}
+                </TableBody>
               </Table>
+                </div>
               </div>
 
               {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                {filteredBusinesses.length > 0 ? (
-                  filteredBusinesses.map((business) => (
-                    <div key={business.id} className="border rounded-lg p-3 bg-muted/20">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-sm">{business.businessName}</h4>
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="outline" className="text-xs h-7 px-2">
-                            Send
-                          </Button>
-                          <Button size="sm" variant="secondary" className="text-xs h-7 px-2">
-                            Resend
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                        <div><span className="font-medium">Registered:</span> {business.registered}</div>
-                        <div><span className="font-medium">Expires:</span> {business.subscriptionEnd}</div>
-                        <div className="col-span-2"><span className="font-medium">Phone:</span> {business.phoneNumber}</div>
-                      </div>
+              <div className="md:hidden space-y-2">
+                {inactiveUsers.length > 0 ? (
+                  inactiveUsers.map((user, index) => (
+                    <div key={index} className="border rounded-lg p-3 bg-card hover:bg-muted/20 transition-colors">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm truncate">{user["Business Name"]}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Expires: {new Date(user["Subscription end"]).toLocaleDateString()}
+                          </p>
                     </div>
+                        <div className="flex gap-1 ml-2">
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+                        Send
+                      </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                        Resend
+                      </Button>
+                    </div>
+                  </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground">Registered</span>
+                          <span>{new Date(user.Registered).toLocaleDateString()}</span>
+                  </div>
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground">Phone</span>
+                          <span className="font-mono">{user["Phone Number"]}</span>
+                    </div>
+                  </div>
+                  </div>
                   ))
                 ) : (
-                  <div className="border rounded-lg p-4 bg-muted/20 text-center">
-                    <p className="text-muted-foreground">No businesses found for the selected date.</p>
+                  <div className="border rounded-lg p-6 bg-muted/20 text-center">
+                    {inactiveUsersLoading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span className="text-muted-foreground">Loading inactive users...</span>
+                </div>
+                    ) : (
+                      <div>
+                        <Users className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+                        <p className="text-muted-foreground text-sm">No inactive users found.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Click refresh to load data.</p>
+                    </div>
+                    )}
                   </div>
                 )}
               </div>
+
+              {/* Pagination Controls */}
+              {(pagination.total > pagination.limit || pagination.currentPage > 1) && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {inactiveUsers.length > 0 ? ((pagination.currentPage - 1) * pagination.limit) + 1 : 0} to{' '}
+                    {Math.min(pagination.currentPage * pagination.limit, pagination.total)} of {pagination.total} users
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePrevPage}
+                      disabled={pagination.currentPage <= 1 || inactiveUsersLoading}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground px-2">
+                      Page {pagination.currentPage}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={!pagination.hasMore || inactiveUsersLoading}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
