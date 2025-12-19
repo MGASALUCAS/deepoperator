@@ -11,9 +11,9 @@ const PROD_API_BASE_URL = 'https://api.swahilies.quantumintelligence.co.tz';
 
 // Detect development mode (automatically detects localhost)
 const isDevMode = env?.MODE === 'development' ||
-                  env?.VITE_DEV === 'true' ||
-                  process.env.NODE_ENV === 'development' ||
-                  (typeof window !== 'undefined' && window.location.hostname === 'localhost');
+  env?.VITE_DEV === 'true' ||
+  process.env.NODE_ENV === 'development' ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost');
 
 export const API_BASE_URL = isDevMode ? DEV_API_BASE_URL : PROD_API_BASE_URL;
 
