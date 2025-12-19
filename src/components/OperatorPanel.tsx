@@ -146,6 +146,11 @@ const OperatorPanel = () => {
     hasMore: false,
   });
 
+  // Fetch inactive paid users on component mount
+  useEffect(() => {
+    fetchInactiveUsers(1);
+  }, []);
+
   // Fetch inactive paid users
   const fetchInactiveUsers = async (page: number = 1) => {
     setInactiveUsersLoading(true);
