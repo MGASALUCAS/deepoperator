@@ -193,11 +193,21 @@ const OperatorPanel = () => {
       }
     } catch (error) {
       console.error('Error fetching inactive users:', error);
-      toast({
-        title: "Connection Error",
-        description: "Failed to connect to the server",
-        variant: "destructive"
-      });
+
+      // Check if it's a CORS or network error
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        toast({
+          title: "CORS/Network Error",
+          description: "Unable to connect to the API. Check if the backend server is running and CORS is configured.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Connection Error",
+          description: "Failed to connect to the server. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setInactiveUsersLoading(false);
     }

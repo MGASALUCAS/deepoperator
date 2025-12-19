@@ -1,15 +1,22 @@
 // API Configuration
-// Change this URL to switch between local development and production
-
-// For local development
-// export const API_BASE_URL = 'http://127.0.0.1:4900';
-
-// For production (uncomment the line below and comment the line above)
-
-
-export const API_BASE_URL = 'https://api.swahilies.quantumintelligence.co.tz';
+// Automatically switches between local development and production based on environment
 
 const env = typeof import.meta !== "undefined" ? import.meta.env : undefined;
+
+// For local development - uses Vite proxy
+const DEV_API_BASE_URL = 'http://localhost:8080/api';
+
+// For production
+const PROD_API_BASE_URL = 'https://api.swahilies.quantumintelligence.co.tz';
+
+// Detect development mode (automatically detects localhost)
+const isDevMode = env?.MODE === 'development' ||
+                  env?.VITE_DEV === 'true' ||
+                  process.env.NODE_ENV === 'development' ||
+                  (typeof window !== 'undefined' && window.location.hostname === 'localhost');
+
+export const API_BASE_URL = isDevMode ? DEV_API_BASE_URL : PROD_API_BASE_URL;
+
 const REPORT_REGISTRATIONS_PATH =
   env?.VITE_REPORT_REGISTRATIONS_PATH || "/reports/registrations-and-paid-same-month";
 const REPORT_SUBSCRIPTIONS_PATH =
