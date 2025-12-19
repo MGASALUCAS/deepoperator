@@ -138,12 +138,13 @@ const OperatorPanel = () => {
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Pagination state
-  const [pagination, setPagination] = useState({
+  // Load more state
+  const [loadMoreState, setLoadMoreState] = useState({
     currentPage: 1,
     total: 0,
     limit: 100,
     hasMore: false,
+    loadedCount: 0, // Track how many records are currently loaded
   });
 
   // Fetch inactive paid users on component mount
@@ -151,13 +152,13 @@ const OperatorPanel = () => {
     fetchInactiveUsers(1);
   }, []);
 
-  // Fetch inactive paid users
-  const fetchInactiveUsers = async (page: number = 1) => {
+  // Fetch inactive paid users (supports load more)
+  const fetchInactiveUsers = async (page: number = 1, isLoadMore: boolean = false) => {
     setInactiveUsersLoading(true);
     try {
       const params = new URLSearchParams();
       params.append('days', inactiveUsersFilters.days.toString());
-      params.append('limit', pagination.limit.toString());
+      params.append('limit', loadMoreState.limit.toString());
       params.append('page', page.toString());
 
       if (inactiveUsersFilters.startDate) {
@@ -172,18 +173,37 @@ const OperatorPanel = () => {
       const data: InactiveUsersResponse = await response.json();
 
       if (response.ok) {
-        setInactiveUsers(data.rows);
-        setPagination(prev => ({
-          ...prev,
-          currentPage: data.page,
-          total: data.total,
-          hasMore: data.has_more,
-        }));
+        if (isLoadMore) {
+          // Append new data to existing data
+          setInactiveUsers(prev => [...prev, ...data.rows]);
+          setLoadMoreState(prev => ({
+            ...prev,
+            currentPage: data.page,
+            total: data.total,
+            hasMore: data.has_more,
+            loadedCount: prev.loadedCount + data.rows.length,
+          }));
 
-        toast({
-          title: "Inactive Users Loaded",
-          description: `Found ${data.count} inactive paid users on page ${data.page} (Total: ${data.total}).`,
-        });
+          toast({
+            title: "More Users Loaded",
+            description: `Loaded ${data.rows.length} additional users. Total loaded: ${loadMoreState.loadedCount + data.rows.length} of ${data.total}.`,
+          });
+        } else {
+          // Initial load - replace data
+          setInactiveUsers(data.rows);
+          setLoadMoreState(prev => ({
+            ...prev,
+            currentPage: data.page,
+            total: data.total,
+            hasMore: data.has_more,
+            loadedCount: data.rows.length,
+          }));
+
+          toast({
+            title: "Inactive Users Loaded",
+            description: `Loaded ${data.rows.length} users${data.has_more ? ` (showing first ${loadMoreState.limit} of ${data.total})` : ''}.`,
+          });
+        }
       } else {
         toast({
           title: "Error Loading Inactive Users",
@@ -213,32 +233,21 @@ const OperatorPanel = () => {
     }
   };
 
-  // Pagination handlers
-  const handleNextPage = () => {
-    if (pagination.hasMore) {
-      fetchInactiveUsers(pagination.currentPage + 1);
+  // Load more handler
+  const handleLoadMore = () => {
+    if (loadMoreState.hasMore && !inactiveUsersLoading) {
+      fetchInactiveUsers(loadMoreState.currentPage + 1, true);
     }
   };
 
-  const handlePrevPage = () => {
-    if (pagination.currentPage > 1) {
-      fetchInactiveUsers(pagination.currentPage - 1);
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && (page <= Math.ceil(pagination.total / pagination.limit) || pagination.hasMore)) {
-      fetchInactiveUsers(page);
-    }
-  };
-
-  const handlePageSizeChange = (newLimit: number) => {
-    setPagination(prev => ({
+  // Reset load more state when filters change
+  const resetAndFetchUsers = () => {
+    setLoadMoreState(prev => ({
       ...prev,
-      limit: newLimit,
-      currentPage: 1
+      currentPage: 1,
+      loadedCount: 0,
     }));
-    fetchInactiveUsers(1);
+    fetchInactiveUsers(1, false);
   };
 
   // --- Rules handlers for the AutomationRulesPanel ---
@@ -507,7 +516,7 @@ const OperatorPanel = () => {
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button
-                      onClick={() => fetchInactiveUsers(1)}
+                      onClick={() => resetAndFetchUsers()}
                       disabled={inactiveUsersLoading}
                       size="sm"
                       className="h-8"
@@ -542,7 +551,7 @@ const OperatorPanel = () => {
                           ...prev,
                           days: parseInt(e.target.value) || 15
                         }));
-                        setPagination(prev => ({ ...prev, currentPage: 1 }));
+                        resetAndFetchUsers();
                       }}
                       className="w-16 h-7 text-xs"
                       min="1"
@@ -560,7 +569,7 @@ const OperatorPanel = () => {
                           ...prev,
                           requirePhone: checked
                         }));
-                        setPagination(prev => ({ ...prev, currentPage: 1 }));
+                        resetAndFetchUsers();
                       }}
                       className="scale-75"
                     />
@@ -578,7 +587,7 @@ const OperatorPanel = () => {
                           endDate: undefined,
                           requirePhone: true,
                         });
-                        setPagination(prev => ({ ...prev, currentPage: 1 }));
+                        resetAndFetchUsers();
                       }}
                       className="h-7 px-2 text-xs"
                     >
@@ -612,7 +621,7 @@ const OperatorPanel = () => {
                               selected={inactiveUsersFilters.startDate}
                               onSelect={(date) => {
                                 setInactiveUsersFilters(prev => ({ ...prev, startDate: date }));
-                                setPagination(prev => ({ ...prev, currentPage: 1 }));
+                                resetAndFetchUsers();
                               }}
                               initialFocus
                             />
@@ -637,7 +646,7 @@ const OperatorPanel = () => {
                               selected={inactiveUsersFilters.endDate}
                               onSelect={(date) => {
                                 setInactiveUsersFilters(prev => ({ ...prev, endDate: date }));
-                                setPagination(prev => ({ ...prev, currentPage: 1 }));
+                                resetAndFetchUsers();
                               }}
                               initialFocus
                             />
@@ -757,22 +766,29 @@ const OperatorPanel = () => {
                 )}
               </div>
 
-              {/* Pagination Controls */}
-              {(pagination.total > 0) && (
+              {/* Load More Controls */}
+              {(loadMoreState.total > 0) && (
                 <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="text-sm text-muted-foreground">
-                      {(() => {
-                        const start = inactiveUsers.length > 0 ? ((pagination.currentPage - 1) * pagination.limit) + 1 : 0;
-                        const end = Math.min(pagination.currentPage * pagination.limit, pagination.total);
-                        return `Showing ${start}-${end} of ${pagination.total} users`;
-                      })()}
+                      Loaded {loadMoreState.loadedCount} of {loadMoreState.total} users
+                      {loadMoreState.hasMore && (
+                        <span className="text-primary ml-1">
+                          (+{Math.min(loadMoreState.limit, loadMoreState.total - loadMoreState.loadedCount)} more available)
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Page size:</span>
+                      <span className="text-xs text-muted-foreground">Load size:</span>
                       <Select
-                        value={pagination.limit.toString()}
-                        onValueChange={(value) => handlePageSizeChange(parseInt(value))}
+                        value={loadMoreState.limit.toString()}
+                        onValueChange={(value) => {
+                          const newLimit = parseInt(value);
+                          setLoadMoreState(prev => ({
+                            ...prev,
+                            limit: newLimit,
+                          }));
+                        }}
                         disabled={inactiveUsersLoading}
                       >
                         <SelectTrigger className="w-16 h-7 text-xs">
@@ -788,69 +804,38 @@ const OperatorPanel = () => {
                     </div>
                   </div>
 
-                  {/* Page Navigation */}
-                  <div className="flex items-center justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePrevPage}
-                      disabled={pagination.currentPage <= 1 || inactiveUsersLoading}
-                      className="h-8 px-3"
-                    >
-                      ← Previous
-                    </Button>
+                  {/* Load More Button */}
+                  {loadMoreState.hasMore && (
+                    <div className="flex justify-center">
+                      <Button
+                        onClick={handleLoadMore}
+                        disabled={inactiveUsersLoading}
+                        variant="outline"
+                        className="h-10 px-6"
+                      >
+                        {inactiveUsersLoading ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            Load More Users
+                            <span className="ml-2 text-xs">
+                              (+{Math.min(loadMoreState.limit, loadMoreState.total - loadMoreState.loadedCount)})
+                            </span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
 
-                    {/* Page Numbers */}
-                    {(() => {
-                      const totalPages = Math.ceil(pagination.total / pagination.limit);
-                      const currentPage = pagination.currentPage;
-                      const pages = [];
-
-                      // Show max 5 page numbers
-                      let startPage = Math.max(1, currentPage - 2);
-                      let endPage = Math.min(totalPages, startPage + 4);
-
-                      // Adjust start page if we're near the end
-                      if (endPage - startPage < 4) {
-                        startPage = Math.max(1, endPage - 4);
-                      }
-
-                      for (let i = startPage; i <= endPage; i++) {
-                        pages.push(
-                          <Button
-                            key={i}
-                            variant={i === currentPage ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(i)}
-                            disabled={inactiveUsersLoading}
-                            className="h-8 w-8 p-0"
-                          >
-                            {i}
-                          </Button>
-                        );
-                      }
-
-                      return pages;
-                    })()}
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleNextPage}
-                      disabled={!pagination.hasMore || inactiveUsersLoading}
-                      className="h-8 px-3"
-                    >
-                      Next →
-                    </Button>
-                  </div>
-
-                  {/* Page Info */}
-                  <div className="text-center mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      Page {pagination.currentPage} of {Math.ceil(pagination.total / pagination.limit)}
-                      {pagination.hasMore && pagination.currentPage >= Math.ceil(pagination.total / pagination.limit) && " (more available)"}
-                    </span>
-                  </div>
+                  {/* Load Complete Message */}
+                  {!loadMoreState.hasMore && loadMoreState.loadedCount > 0 && (
+                    <div className="text-center text-sm text-muted-foreground">
+                      All {loadMoreState.total} users have been loaded
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
