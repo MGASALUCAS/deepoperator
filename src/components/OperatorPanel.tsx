@@ -232,6 +232,15 @@ const OperatorPanel = () => {
     }
   };
 
+  const handlePageSizeChange = (newLimit: number) => {
+    setPagination(prev => ({
+      ...prev,
+      limit: newLimit,
+      currentPage: 1
+    }));
+    fetchInactiveUsers(1);
+  };
+
   // --- Rules handlers for the AutomationRulesPanel ---
   const handleToggleRule = (id: number, newStatus: "active" | "paused") => {
     setAutomationRules(rules =>
@@ -749,32 +758,98 @@ const OperatorPanel = () => {
               </div>
 
               {/* Pagination Controls */}
-              {(pagination.total > pagination.limit || pagination.currentPage > 1) && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {inactiveUsers.length > 0 ? ((pagination.currentPage - 1) * pagination.limit) + 1 : 0} to{' '}
-                    {Math.min(pagination.currentPage * pagination.limit, pagination.total)} of {pagination.total} users
+              {(pagination.total > 0) && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm text-muted-foreground">
+                      {(() => {
+                        const start = inactiveUsers.length > 0 ? ((pagination.currentPage - 1) * pagination.limit) + 1 : 0;
+                        const end = Math.min(pagination.currentPage * pagination.limit, pagination.total);
+                        return `Showing ${start}-${end} of ${pagination.total} users`;
+                      })()}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Page size:</span>
+                      <Select
+                        value={pagination.limit.toString()}
+                        onValueChange={(value) => handlePageSizeChange(parseInt(value))}
+                        disabled={inactiveUsersLoading}
+                      >
+                        <SelectTrigger className="w-16 h-7 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                          <SelectItem value="200">200</SelectItem>
+                          <SelectItem value="500">500</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  {/* Page Navigation */}
+                  <div className="flex items-center justify-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handlePrevPage}
                       disabled={pagination.currentPage <= 1 || inactiveUsersLoading}
+                      className="h-8 px-3"
                     >
-                      Previous
+                      ← Previous
                     </Button>
-                    <span className="text-sm text-muted-foreground px-2">
-                      Page {pagination.currentPage}
-                    </span>
+
+                    {/* Page Numbers */}
+                    {(() => {
+                      const totalPages = Math.ceil(pagination.total / pagination.limit);
+                      const currentPage = pagination.currentPage;
+                      const pages = [];
+
+                      // Show max 5 page numbers
+                      let startPage = Math.max(1, currentPage - 2);
+                      let endPage = Math.min(totalPages, startPage + 4);
+
+                      // Adjust start page if we're near the end
+                      if (endPage - startPage < 4) {
+                        startPage = Math.max(1, endPage - 4);
+                      }
+
+                      for (let i = startPage; i <= endPage; i++) {
+                        pages.push(
+                          <Button
+                            key={i}
+                            variant={i === currentPage ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(i)}
+                            disabled={inactiveUsersLoading}
+                            className="h-8 w-8 p-0"
+                          >
+                            {i}
+                          </Button>
+                        );
+                      }
+
+                      return pages;
+                    })()}
+
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleNextPage}
                       disabled={!pagination.hasMore || inactiveUsersLoading}
+                      className="h-8 px-3"
                     >
-                      Next
+                      Next →
                     </Button>
+                  </div>
+
+                  {/* Page Info */}
+                  <div className="text-center mt-2">
+                    <span className="text-xs text-muted-foreground">
+                      Page {pagination.currentPage} of {Math.ceil(pagination.total / pagination.limit)}
+                      {pagination.hasMore && pagination.currentPage >= Math.ceil(pagination.total / pagination.limit) && " (more available)"}
+                    </span>
                   </div>
                 </div>
               )}
