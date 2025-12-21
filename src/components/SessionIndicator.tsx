@@ -49,32 +49,34 @@ const SessionIndicator: React.FC = () => {
 if (!timeLeft) return null;
 
   return (
-    <div className="fixed top-3 inset-x-0 z-[60] px-4 sm:px-0 pointer-events-none">
-      <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-end sm:items-center sm:gap-2 sm:mr-4 pointer-events-auto">
-      <Badge
-        variant={isVisible ? "destructive" : "secondary"}
-        className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold transition-all duration-300 ${
-          isVisible ? 'animate-pulse' : ''
-        }`}
-      >
-        <Clock className="w-3 h-3" />
-        <span className="font-mono tracking-wide">
-          {timeLeft}
-        </span>
-      </Badge>
+    <div className="fixed top-2 right-2 z-[60] pointer-events-none">
+      <div className="flex items-center gap-1 pointer-events-auto">
+        {/* Time Badge - Compact version */}
+        <Badge
+          variant={isVisible ? "destructive" : "secondary"}
+          className={`flex items-center gap-1 px-2 py-1 text-xs font-medium transition-all duration-300 ${
+            isVisible ? 'animate-pulse shadow-lg' : 'shadow-sm'
+          }`}
+        >
+          <Clock className="w-3 h-3 flex-shrink-0" />
+          <span className="font-mono text-xs tracking-tight">
+            {timeLeft}
+          </span>
+        </Badge>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={logout}
-        className="hidden sm:inline-flex h-8 w-8 text-xs hover:bg-red-50 hover:text-red-600"
-        title="Logout"
-      >
-        <LogOut className="w-4 h-4" />
-      </Button>
+        {/* Logout Button - Always visible but compact */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={logout}
+          className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 flex-shrink-0"
+          title="Logout"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+        </Button>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default SessionIndicator;
