@@ -62,6 +62,17 @@ if (!timeLeft) return null;
             {timeLeft}
           </span>
         </Badge>
+
+        {/* Logout Button - Only visible on desktop (lg+) */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={logout}
+          className="hidden lg:inline-flex h-8 w-8 text-xs hover:bg-red-50 hover:text-red-600"
+          title="Logout"
+        >
+          <LogOut className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
