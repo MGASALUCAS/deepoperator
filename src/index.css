@@ -337,7 +337,7 @@
 
 /* Hide SessionIndicator when fullscreen dialog is open */
 body.fullscreen-dialog-open [class*="z-[60]"],
-body.fullscreen-dialog-open .fixed.top-3 {
+body.fullscreen-dialog-open .fixed.top-2.right-2 {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
