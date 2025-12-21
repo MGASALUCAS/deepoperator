@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * CRITICAL: Tailwind CSS @apply Syntax Rules
+ * ==========================================
+ * When using @apply directives, NEVER put spaces after colons in responsive prefixes:
+ *
+ * ✅ CORRECT:   @apply mx-auto px-4 sm:px-6 lg:px-8;
+ * ❌ WRONG:     @apply mx-auto px-4 sm: px-6 lg:px-8;
+ *
+ * This will cause PostCSS compilation errors. Always use the correct syntax above.
+ */
+
 /* Revolutionary Design System - Emotionally Engaging Color Psychology & Neurodesign */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
