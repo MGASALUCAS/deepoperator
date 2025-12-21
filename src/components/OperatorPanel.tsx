@@ -148,19 +148,20 @@ const OperatorPanel = () => {
     hasPrevPage: false,
   });
 
-  // Load first page on component mount
+  // Store all data for client-side pagination
+  const [allInactiveUsers, setAllInactiveUsers] = useState<InactiveUserData[]>([]);
+
+  // Load all data on component mount for client-side pagination
   useEffect(() => {
-    fetchInactiveUsers(1);
+    fetchAllInactiveUsers();
   }, []);
 
-  // Fetch inactive paid users with Amazon-style pagination
-  const fetchInactiveUsers = async (page: number = 1, itemsPerPage: number = pagination.itemsPerPage) => {
+  // Fetch all inactive paid users (client-side pagination approach)
+  const fetchAllInactiveUsers = async () => {
     setInactiveUsersLoading(true);
     try {
       const params = new URLSearchParams();
       params.append('days', inactiveUsersFilters.days.toString());
-      params.append('limit', itemsPerPage.toString());
-      params.append('page', page.toString());
 
       if (inactiveUsersFilters.startDate) {
         params.append('start', format(inactiveUsersFilters.startDate, 'yyyy-MM-dd'));
@@ -170,39 +171,48 @@ const OperatorPanel = () => {
       }
       params.append('require_phone', inactiveUsersFilters.requirePhone.toString());
 
+      console.log('🔍 Fetching ALL users with params:', {
+        days: inactiveUsersFilters.days,
+        startDate: inactiveUsersFilters.startDate,
+        endDate: inactiveUsersFilters.endDate,
+        requirePhone: inactiveUsersFilters.requirePhone
+      });
+
       const response = await fetch(`${API_ENDPOINTS.INACTIVE_PAID_USERS}?${params}`);
       const data: InactiveUsersResponse = await response.json();
 
+      console.log('📊 API Response:', {
+        status: response.status,
+        ok: response.ok,
+        totalRecords: data.total,
+        rowsReceived: data.rows?.length || 0,
+        hasMore: data.has_more
+      });
+
       if (response.ok) {
-        const totalPages = Math.ceil(data.total / itemsPerPage);
+        // Store all data for client-side pagination
+        setAllInactiveUsers(data.rows || []);
+
+        // Calculate pagination info
+        const totalItems = data.total || data.rows.length;
+        const totalPages = Math.ceil(totalItems / pagination.itemsPerPage);
 
         setPagination(prev => ({
           ...prev,
-          currentPage: data.page,
-          itemsPerPage: itemsPerPage,
-          totalItems: data.total,
+          currentPage: 1, // Reset to first page
+          totalItems: totalItems,
           totalPages: totalPages,
-          hasNextPage: data.has_more,
-          hasPrevPage: data.page > 1,
+          hasNextPage: totalPages > 1,
+          hasPrevPage: false,
         }));
 
-        setInactiveUsers(data.rows);
+        // Apply initial pagination
+        applyClientSidePagination(1, pagination.itemsPerPage, data.rows || []);
 
-        // Show toast only for non-initial loads
-        if (page > 1) {
-          const startItem = ((data.page - 1) * itemsPerPage) + 1;
-          const endItem = Math.min(data.page * itemsPerPage, data.total);
-
-          toast({
-            title: "Page Loaded",
-            description: `Showing ${startItem}-${endItem} of ${data.total} inactive users`,
-          });
-        } else {
-          toast({
-            title: "Inactive Users Loaded",
-            description: `Found ${data.total} inactive paid users (${data.rows.length} shown)`,
-          });
-        }
+        toast({
+          title: "Inactive Users Loaded",
+          description: `Found ${totalItems} inactive paid users. Showing page 1.`,
+        });
       } else {
         toast({
           title: "Error Loading Users",
@@ -232,40 +242,69 @@ const OperatorPanel = () => {
     }
   };
 
-  // Pagination handlers
+  // Apply client-side pagination to the stored data
+  const applyClientSidePagination = (page: number, itemsPerPage: number, data?: InactiveUserData[]) => {
+    const dataToPaginate = data || allInactiveUsers;
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedRows = dataToPaginate.slice(startIndex, endIndex);
+
+    console.log('📄 Client-side pagination applied:', {
+      page,
+      itemsPerPage,
+      startIndex,
+      endIndex,
+      totalData: dataToPaginate.length,
+      paginatedRows: paginatedRows.length,
+      showing: `${startIndex + 1}-${Math.min(endIndex, dataToPaginate.length)} of ${dataToPaginate.length}`
+    });
+
+    setInactiveUsers(paginatedRows);
+  };
+
+  // Client-side pagination handlers
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= pagination.totalPages) {
-      fetchInactiveUsers(page);
+    if (page >= 1 && page <= pagination.totalPages && !inactiveUsersLoading) {
+      setPagination(prev => ({
+        ...prev,
+        currentPage: page,
+        hasPrevPage: page > 1,
+        hasNextPage: page < pagination.totalPages,
+      }));
+      applyClientSidePagination(page, pagination.itemsPerPage);
     }
   };
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    const totalPages = Math.ceil(pagination.totalItems / newItemsPerPage);
+
     setPagination(prev => ({
       ...prev,
       itemsPerPage: newItemsPerPage,
       currentPage: 1, // Reset to first page when changing items per page
+      totalPages: totalPages,
+      hasNextPage: totalPages > 1,
+      hasPrevPage: false,
     }));
-    fetchInactiveUsers(1, newItemsPerPage);
+
+    applyClientSidePagination(1, newItemsPerPage);
   };
 
-  // Reload first page when filters change
+  // Reload all data when filters change
   const handleFilterChange = () => {
+    setAllInactiveUsers([]);
+    setInactiveUsers([]);
     setPagination(prev => ({
       ...prev,
       currentPage: 1,
+      totalItems: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
     }));
-    fetchInactiveUsers(1);
+    fetchAllInactiveUsers();
   };
 
-  // Reset load more state when filters change
-  const resetAndFetchUsers = () => {
-    setLoadMoreState(prev => ({
-      ...prev,
-      currentPage: 1,
-      loadedCount: 0,
-    }));
-    fetchInactiveUsers(1, false);
-  };
 
   // --- Rules handlers for the AutomationRulesPanel ---
   const handleToggleRule = (id: number, newStatus: "active" | "paused") => {
@@ -533,7 +572,7 @@ const OperatorPanel = () => {
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button
-                      onClick={() => resetAndFetchUsers()}
+                      onClick={() => fetchAllInactiveUsers()}
                       disabled={inactiveUsersLoading}
                       size="sm"
                       className="h-8"
