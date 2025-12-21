@@ -378,17 +378,17 @@
     }
 
     .grid-responsive {
-        @apply grid gap-4 md: gap-6 lg:gap-8;
+        @apply grid gap-4 md:gap-6 lg:gap-8;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     }
 
     .flex-responsive {
-        @apply flex flex-col gap-4 md: flex-row md:gap-6;
+        @apply flex flex-col gap-4 md:flex-row md:gap-6;
     }
 
     /* Accessibility & Focus States */
     .focus-visible-ring {
-        @apply focus-visible: outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 dark:focus-visible:ring-offset-background;
+        @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 dark:focus-visible:ring-offset-background;
     }
 
     /* Loading States */
@@ -413,7 +413,7 @@
 
     /* Mobile-First Responsive Navigation */
     .nav-mobile-optimized {
-        @apply fixed bottom-0 left-0 right-0 z-50 md: relative md:bottom-auto;
+        @apply fixed bottom-0 left-0 right-0 z-50 md:relative md:bottom-auto;
     }
 
     .nav-item-mobile {
@@ -422,7 +422,7 @@
     }
 
     .nav-item-desktop {
-        @apply hidden md: flex items-center gap-3 px-4 py-3 rounded-xl;
+        @apply hidden md:flex items-center gap-3 px-4 py-3 rounded-xl;
     }
 }
 
