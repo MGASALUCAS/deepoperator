@@ -87,7 +87,7 @@ const Index = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="pt-16 sm:pt-20 pb-16 sm:pb-20 lg:pt-6 lg:pb-6 lg:pl-80 relative z-10">
+      <main className="pt-16 sm:pt-20 pb-20 sm:pb-24 lg:pt-6 lg:pb-6 lg:pl-80 relative z-10">
         <ResponsiveContainer maxWidth="full" padding="sm">
           <PageTransition pageKey={activeSection}>
             <motion.div

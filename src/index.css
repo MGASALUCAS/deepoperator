@@ -1,169 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/*
- * CRITICAL: Tailwind CSS @apply Syntax Rules
- * ==========================================
- * When using @apply directives, NEVER put spaces after colons in responsive prefixes:
- *
- * ✅ CORRECT:   @apply mx-auto px-4 sm:px-6 lg:px-8;
- * ❌ WRONG:     @apply mx-auto px-4 sm: px-6 lg:px-8;
- *
- * This will cause PostCSS compilation errors. Always use the correct syntax above.
- */
-
-/* Revolutionary Design System - Emotionally Engaging Color Psychology & Neurodesign */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-
+/* Design System Variables */
 @layer base {
     :root {
-        /* Core Identity - Emotional Foundation */
         --background: 0 0% 100%;
         --foreground: 225 15% 15%;
-
-        /* Premium Glass Morphism */
-        --glass-bg: 0 0% 100% / 0.05;
-        --glass-border: 0 0% 100% / 0.1;
-        --glass-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-
-        /* Heroic Navigation System */
-        --nav-bg: 240 12% 6%;
-        --nav-gradient: linear-gradient(135deg,
-                hsl(240 12% 6%) 0%,
-                hsl(260 15% 8%) 50%,
-                hsl(280 20% 10%) 100%);
-        --nav-accent: 0 0% 100% / 0.05;
-        --nav-border: 0 0% 100% / 0.08;
-
-        /* Emotional Color Palette - Science-Based */
-        --coral: 14 100% 70%;
-        /* Energy & Action */
-        --coral-light: 14 100% 85%;
-        --coral-dark: 14 100% 55%;
-        --coral-glow: 14 100% 70% / 0.3;
-
-        --mint: 158 100% 60%;
-        /* Growth & Trust */
-        --mint-light: 158 100% 75%;
-        --mint-dark: 158 100% 45%;
-        --mint-glow: 158 100% 60% / 0.3;
-
-        --violet: 260 100% 70%;
-        /* Innovation & Premium */
-        --violet-light: 260 100% 85%;
-        --violet-dark: 260 100% 55%;
-        --violet-glow: 260 100% 70% / 0.3;
-
-        --gold: 45 100% 65%;
-        /* Success & Achievement */
-        --gold-light: 45 100% 80%;
-        --gold-dark: 45 100% 50%;
-        --gold-glow: 45 100% 65% / 0.3;
-
-        /* Neural Feedback Colors */
-        --success: 142 76% 36%;
-        --warning: 38 92% 50%;
-        --error: 0 84% 60%;
-        --info: 199 89% 48%;
-
-        /* Advanced Typography System */
-        --font-display: 'Space Grotesk', system-ui, sans-serif;
-        --font-body: 'Inter', system-ui, sans-serif;
-        --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-
-        /* Micro-interaction & Animation */
-        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        --transition-elastic: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-        /* Spatial Rhythm - Golden Ratio Based */
-        --space-xs: 0.25rem;
-        /* 4px */
-        --space-sm: 0.5rem;
-        /* 8px */
-        --space-md: 0.75rem;
-        /* 12px */
-        --space-lg: 1rem;
-        /* 16px */
-        --space-xl: 1.618rem;
-        /* 26px - Golden */
-        --space-2xl: 2.618rem;
-        /* 42px - Golden */
-        --space-3xl: 4.236rem;
-        /* 68px - Golden */
-
-        /* Revolutionary Gradients */
-        --gradient-hero: linear-gradient(135deg,
-                hsl(var(--violet)) 0%,
-                hsl(var(--coral)) 50%,
-                hsl(var(--mint)) 100%);
-        --gradient-premium: linear-gradient(45deg,
-                hsl(var(--gold)) 0%,
-                hsl(var(--coral)) 100%);
-        --gradient-trust: linear-gradient(180deg,
-                hsl(var(--mint)) 0%,
-                hsl(var(--violet)) 100%);
-        --gradient-glass: linear-gradient(135deg,
-                rgba(255, 255, 255, 0.1) 0%,
-                rgba(255, 255, 255, 0.05) 100%);
-
-        /* Shadows - Depth Psychology */
-        --shadow-soft: 0 2px 8px rgb(0 0 0 / 0.04);
-        --shadow-medium: 0 8px 32px rgb(0 0 0 / 0.08);
-        --shadow-strong: 0 20px 64px rgb(0 0 0 / 0.12);
-        --shadow-magical: 0 25px 50px -12px rgb(0 0 0 / 0.25),
-            0 0 0 1px rgb(255 255 255 / 0.1);
-
-        /* Component Tokens */
         --card: 0 0% 100%;
         --card-foreground: 225 15% 15%;
         --border: 220 13% 91%;
         --input: 220 13% 91%;
-        --ring: var(--coral);
-        --radius: 12px;
-
-        /* Primary Semantic Colors */
-        --primary: var(--coral);
+        --primary: 14 100% 70%;
         --primary-foreground: 0 0% 100%;
-        --secondary: var(--mint);
+        --secondary: 158 100% 60%;
         --secondary-foreground: 0 0% 100%;
-        --accent: var(--violet);
-        --accent-foreground: 0 0% 100%;
         --muted: 220 14% 96%;
         --muted-foreground: 220 8.9% 46.1%;
-        --destructive: var(--error);
+        --accent: 220 14% 96%;
+        --accent-foreground: 220 8.9% 46.1%;
+        --destructive: 0 84% 60%;
         --destructive-foreground: 0 0% 100%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 225 15% 15%;
+        --ring: 14 100% 70%;
+        --radius: 12px;
+
+        /* Enhanced Emotional Color System - Light Mode */
+        --coral: 14 100% 70%;
+        --coral-light: 14 85% 80%;
+        --coral-dark: 14 100% 60%;
+        --coral-glow: 14 100% 85%;
+
+        --mint: 158 100% 60%;
+        --mint-light: 158 85% 70%;
+        --mint-dark: 158 100% 50%;
+        --mint-glow: 158 100% 75%;
+
+        --violet: 262 83% 58%;
+        --violet-light: 262 70% 68%;
+        --violet-dark: 262 83% 48%;
+        --violet-glow: 262 83% 73%;
+
+        --gold: 45 86% 83%;
+        --gold-light: 45 75% 88%;
+        --gold-dark: 45 86% 73%;
+        --gold-glow: 45 86% 93%;
+
+        /* Status Colors */
+        --success: 142 71% 45%;
+        --warning: 38 92% 50%;
+        --error: 0 84% 60%;
+        --info: 199 89% 48%;
+
+        /* Font Variables */
+        --font-display: 'Space Grotesk', system-ui, sans-serif;
+        --font-body: 'Inter', system-ui, sans-serif;
+        --font-mono: 'Fira Code', 'Monaco', 'Cascadia Code', monospace;
+
+        /* Gradient System */
+        --gradient-hero: linear-gradient(135deg, hsl(var(--coral)) 0%, hsl(var(--violet)) 100%);
+        --gradient-premium: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--violet)) 100%);
+        --gradient-trust: linear-gradient(135deg, hsl(var(--mint)) 0%, hsl(var(--coral)) 50%, hsl(var(--violet)) 100%);
+
+        /* Spacing System */
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 1rem;
+        --space-lg: 1.5rem;
+        --space-xl: 2rem;
+        --space-2xl: 3rem;
+        --space-3xl: 4rem;
+
+        /* Shadow System */
+        --shadow-soft: 0 2px 8px -2px rgb(0 0 0 / 0.1);
+        --shadow-medium: 0 4px 16px -4px rgb(0 0 0 / 0.15);
+        --shadow-strong: 0 8px 32px -8px rgb(0 0 0 / 0.25);
     }
 
     .dark {
-        /* Dark Mode - Emotional Depth */
         --background: 224 15% 4%;
         --foreground: 213 27% 84%;
-
-        --glass-bg: 0 0% 0% / 0.1;
-        --glass-border: 0 0% 100% / 0.08;
-
         --card: 224 15% 6%;
         --card-foreground: 213 27% 84%;
         --border: 216 34% 17%;
         --input: 216 34% 17%;
+        --primary: 14 100% 70%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 158 100% 60%;
+        --secondary-foreground: 0 0% 100%;
         --muted: 223 47% 11%;
         --muted-foreground: 215.4 16.3% 56.9%;
+        --accent: 223 47% 11%;
+        --accent-foreground: 215.4 16.3% 56.9%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --ring: 14 100% 70%;
         --popover: 224 15% 6%;
         --popover-foreground: 213 27% 84%;
 
+        /* Enhanced Emotional Color System - Dark Mode */
+        --coral: 14 100% 75%;
+        --coral-light: 14 85% 85%;
+        --coral-dark: 14 100% 65%;
+        --coral-glow: 14 100% 90%;
+
+        --mint: 158 100% 65%;
+        --mint-light: 158 85% 75%;
+        --mint-dark: 158 100% 55%;
+        --mint-glow: 158 100% 80%;
+
+        --violet: 262 83% 63%;
+        --violet-light: 262 70% 73%;
+        --violet-dark: 262 83% 53%;
+        --violet-glow: 262 83% 78%;
+
+        --gold: 45 86% 78%;
+        --gold-light: 45 75% 83%;
+        --gold-dark: 45 86% 68%;
+        --gold-glow: 45 86% 88%;
+
+        /* Status Colors - Dark Mode */
+        --success: 142 71% 50%;
+        --warning: 38 92% 55%;
+        --error: 0 84% 65%;
+        --info: 199 89% 53%;
+
         /* Enhanced dark mode gradients */
+        --glass-bg: 0 0% 0% / 0.1;
+        --glass-border: 0 0% 100% / 0.08;
         --gradient-glass: linear-gradient(135deg,
                 rgba(255, 255, 255, 0.05) 0%,
                 rgba(255, 255, 255, 0.02) 100%);
-
+        --gradient-hero: linear-gradient(135deg, hsl(var(--coral)) 0%, hsl(var(--violet)) 100%);
+        --gradient-premium: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--violet)) 100%);
+        --gradient-trust: linear-gradient(135deg, hsl(var(--mint)) 0%, hsl(var(--coral)) 50%, hsl(var(--violet)) 100%);
         --shadow-magical: 0 25px 50px -12px rgb(0 0 0 / 0.5),
             0 0 0 1px rgb(255 255 255 / 0.05);
+
+        /* Dark mode shadow adjustments */
+        --shadow-soft: 0 2px 8px -2px rgb(0 0 0 / 0.3);
+        --shadow-medium: 0 4px 16px -4px rgb(0 0 0 / 0.4);
+        --shadow-strong: 0 8px 32px -8px rgb(0 0 0 / 0.5);
     }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+}
+
+/* Utility Classes */
+@layer utilities {
+    .container-responsive {
+        @apply mx-auto px-4 sm:px-6 lg:px-8;
+        max-width: 1440px;
+    }
+
+    .grid-responsive {
+        @apply grid gap-4 md:gap-6 lg:gap-8;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .flex-responsive {
+        @apply flex flex-col gap-4 md:flex-row md:gap-6;
+    }
+
+    .focus-visible-ring {
+        @apply focus-visible: outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    }
+
+    .nav-mobile-optimized {
+        @apply fixed bottom-0 left-0 right-0 z-50 md:relative md:bottom-auto;
+    }
+
+    .nav-item-mobile {
+        @apply flex flex-col items-center justify-center py-3 px-2 text-xs;
+        min-height: 64px;
+    }
+
+    .nav-item-desktop {
+        @apply hidden md:flex items-center gap-3 px-4 py-3 rounded-xl;
+    }
+}
+
+/* Fullscreen Dialog Fixes */
+body.fullscreen-dialog-open [class*="z-[60]"],
+body.fullscreen-dialog-open .fixed.top-3 {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+body.fullscreen-dialog-open [data-radix-dialog-overlay],
+body.fullscreen-dialog-open div.fixed.inset-0.z-50[class*="bg-black"],
+body.fullscreen-dialog-open [class*="bg-black/80"] {
+    background-color: transparent !important;
+    background: transparent !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+body.fullscreen-dialog-open .fullscreen-dialog-content,
+body.fullscreen-dialog-open [data-radix-dialog-content].fullscreen-dialog-content {
+    position: fixed !important;
+    inset: 0 !important;
+    left: 0 !important;
+    top: 0 !important;
+    transform: none !important;
+    translate: none !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 100 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.fullscreen-dialog-open .fullscreen-dialog-content iframe {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100vw !important;
+    min-height: 100vh !important;
+}
+
+body.fullscreen-dialog-open .fullscreen-dialog-content button[aria-label="Close fullscreen"],
+body.fullscreen-dialog-open .fullscreen-dialog-content button[title*="Close fullscreen"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
 }
 
 @layer base {
@@ -399,7 +474,7 @@
 
     /* Accessibility & Focus States */
     .focus-visible-ring {
-        @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 dark:focus-visible:ring-offset-background;
+        @apply focus-visible: outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 dark:focus-visible:ring-offset-background;
     }
 
     /* Loading States */

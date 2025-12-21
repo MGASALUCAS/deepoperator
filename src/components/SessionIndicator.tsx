@@ -50,7 +50,7 @@ if (!timeLeft) return null;
 
   return (
     <div className="fixed top-3 inset-x-0 z-[60] px-4 sm:px-0 pointer-events-none">
-      <div className="flex justify-center sm:flex-row sm:justify-end sm:items-center sm:gap-2 sm:mr-4 pointer-events-auto">
+      <div className="flex justify-center sm:flex-row sm:justify-end md:justify-center lg:justify-end sm:items-center sm:gap-2 sm:mr-4 pointer-events-auto">
         <Badge
           variant={isVisible ? "destructive" : "secondary"}
           className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold transition-all duration-300 ${
@@ -62,17 +62,18 @@ if (!timeLeft) return null;
             {timeLeft}
           </span>
         </Badge>
-
-        {/* Logout Button - Only visible on desktop (lg+) */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={logout}
-          className="hidden lg:inline-flex h-8 w-8 text-xs hover:bg-red-50 hover:text-red-600"
-          title="Logout"
-        >
-          <LogOut className="w-4 h-4" />
-        </Button>
+        {/* Desktop Logout Button */}
+        <div className="hidden lg:block">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 ml-2"
+            onClick={logout}
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </Button>
+        </div>
       </div>
     </div>
   );
