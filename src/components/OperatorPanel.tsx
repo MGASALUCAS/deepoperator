@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Calendar } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
-import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Send, CalendarIcon, X, Users, RefreshCw, Filter, ChevronDown } from "lucide-react";
+import { Bell, MessageCircle, Smile, ThumbsUp, ThumbsDown, Send, CalendarIcon, X, Users, RefreshCw, Filter, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import CategoryManager from "./CategoryManager";
 import MessageCategoriesPanel, { MessageCategory } from "./MessageCategoriesPanel";
@@ -138,28 +138,29 @@ const OperatorPanel = () => {
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Book-based loading state (Book 1 = first 100, Book 2 = next 100, etc.)
-  const [bookState, setBookState] = useState({
-    currentBook: 1,
-    recordsPerBook: 100,
-    loadedBooks: [] as InactiveUserData[][], // Array of books, each containing records
-    hasMore: false,
-    totalRecords: 0,
+  // Amazon-style pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 100, // Default like Amazon's larger view
+    totalItems: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
   });
 
-  // Load first book on component mount
+  // Load first page on component mount
   useEffect(() => {
-    fetchBook(1);
+    fetchInactiveUsers(1);
   }, []);
 
-  // Fetch inactive paid users by book (each book = 100 records)
-  const fetchBook = async (bookNumber: number) => {
+  // Fetch inactive paid users with Amazon-style pagination
+  const fetchInactiveUsers = async (page: number = 1, itemsPerPage: number = pagination.itemsPerPage) => {
     setInactiveUsersLoading(true);
     try {
       const params = new URLSearchParams();
       params.append('days', inactiveUsersFilters.days.toString());
-      params.append('limit', bookState.recordsPerBook.toString());
-      params.append('page', bookNumber.toString());
+      params.append('limit', itemsPerPage.toString());
+      params.append('page', page.toString());
 
       if (inactiveUsersFilters.startDate) {
         params.append('start', format(inactiveUsersFilters.startDate, 'yyyy-MM-dd'));
@@ -173,40 +174,44 @@ const OperatorPanel = () => {
       const data: InactiveUsersResponse = await response.json();
 
       if (response.ok) {
-        // Store this book in our books array
-        setBookState(prev => {
-          const newLoadedBooks = [...prev.loadedBooks];
-          newLoadedBooks[bookNumber - 1] = data.rows; // Book 1 = index 0
+        const totalPages = Math.ceil(data.total / itemsPerPage);
 
-          return {
-            ...prev,
-            loadedBooks: newLoadedBooks,
-            currentBook: bookNumber,
-            hasMore: data.has_more,
-            totalRecords: data.total,
-          };
-        });
+        setPagination(prev => ({
+          ...prev,
+          currentPage: data.page,
+          itemsPerPage: itemsPerPage,
+          totalItems: data.total,
+          totalPages: totalPages,
+          hasNextPage: data.has_more,
+          hasPrevPage: data.page > 1,
+        }));
 
-        // Update the displayed users (concatenate all loaded books)
-        setInactiveUsers(prev => {
-          const updatedBooks = [...bookState.loadedBooks];
-          updatedBooks[bookNumber - 1] = data.rows;
-          return updatedBooks.flat(); // Flatten all books into single array
-        });
+        setInactiveUsers(data.rows);
 
-        toast({
-          title: `Book ${bookNumber} Loaded`,
-          description: `Loaded ${data.rows.length} users in Book ${bookNumber}${data.has_more ? ` (${bookState.loadedBooks.flat().length + data.rows.length} total loaded)` : ''}.`,
-        });
+        // Show toast only for non-initial loads
+        if (page > 1) {
+          const startItem = ((data.page - 1) * itemsPerPage) + 1;
+          const endItem = Math.min(data.page * itemsPerPage, data.total);
+
+          toast({
+            title: "Page Loaded",
+            description: `Showing ${startItem}-${endItem} of ${data.total} inactive users`,
+          });
+        } else {
+          toast({
+            title: "Inactive Users Loaded",
+            description: `Found ${data.total} inactive paid users (${data.rows.length} shown)`,
+          });
+        }
       } else {
         toast({
-          title: "Error Loading Book",
-          description: data.error || `Failed to fetch Book ${bookNumber}`,
+          title: "Error Loading Users",
+          description: data.error || "Failed to fetch inactive users data",
           variant: "destructive"
         });
       }
     } catch (error) {
-      console.error('Error fetching book:', error);
+      console.error('Error fetching inactive users:', error);
 
       // Check if it's a CORS or network error
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -227,24 +232,29 @@ const OperatorPanel = () => {
     }
   };
 
-  // Load next book handler
-  const handleLoadNextBook = () => {
-    if (bookState.hasMore && !inactiveUsersLoading) {
-      fetchBook(bookState.currentBook + 1);
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      fetchInactiveUsers(page);
     }
   };
 
-  // Reload first book when filters change
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setPagination(prev => ({
+      ...prev,
+      itemsPerPage: newItemsPerPage,
+      currentPage: 1, // Reset to first page when changing items per page
+    }));
+    fetchInactiveUsers(1, newItemsPerPage);
+  };
+
+  // Reload first page when filters change
   const handleFilterChange = () => {
-    setBookState({
-      currentBook: 1,
-      recordsPerBook: 100,
-      loadedBooks: [],
-      hasMore: false,
-      totalRecords: 0,
-    });
-    setInactiveUsers([]);
-    fetchBook(1);
+    setPagination(prev => ({
+      ...prev,
+      currentPage: 1,
+    }));
+    fetchInactiveUsers(1);
   };
 
   // Reset load more state when filters change
@@ -773,84 +783,151 @@ const OperatorPanel = () => {
                 )}
               </div>
 
-              {/* Book Controls */}
-              {(inactiveUsers.length > 0) && (
-                <div className="mt-4 pt-4 border-t">
+              {/* Amazon-Style Pagination */}
+              {(pagination.totalItems > 0) && (
+                <div className="mt-6 pt-4 border-t">
+                  {/* Results Summary - Amazon style */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-sm text-muted-foreground">
-                      <span className="font-medium">Books Loaded:</span>
-                      {Array.from({ length: bookState.currentBook }, (_, i) => (
-                        <Badge key={i + 1} variant="secondary" className="ml-1 text-xs">
-                          Book {i + 1}
-                        </Badge>
-                      ))}
-                      <span className="ml-2">
-                        ({inactiveUsers.length} total users)
-                      </span>
-                      {bookState.hasMore && (
-                        <span className="text-primary ml-1">
-                          (Book {bookState.currentBook + 1} available)
-                        </span>
-                      )}
+                      {(() => {
+                        const start = ((pagination.currentPage - 1) * pagination.itemsPerPage) + 1;
+                        const end = Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems);
+                        return `Showing ${start.toLocaleString()}-${end.toLocaleString()} of ${pagination.totalItems.toLocaleString()} results`;
+                      })()}
                     </div>
+
+                    {/* Items per page selector - Amazon style */}
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Records per book:</span>
+                      <span className="text-sm text-muted-foreground">Show:</span>
                       <Select
-                        value={bookState.recordsPerBook.toString()}
-                        onValueChange={(value) => {
-                          const newRecordsPerBook = parseInt(value);
-                          setBookState(prev => ({
-                            ...prev,
-                            recordsPerBook: newRecordsPerBook,
-                          }));
-                        }}
+                        value={pagination.itemsPerPage.toString()}
+                        onValueChange={(value) => handleItemsPerPageChange(parseInt(value))}
                         disabled={inactiveUsersLoading}
                       >
-                        <SelectTrigger className="w-16 h-7 text-xs">
+                        <SelectTrigger className="w-20 h-8 text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="24">24</SelectItem>
+                          <SelectItem value="48">48</SelectItem>
+                          <SelectItem value="96">96</SelectItem>
                           <SelectItem value="100">100</SelectItem>
                           <SelectItem value="200">200</SelectItem>
-                          <SelectItem value="500">500</SelectItem>
                         </SelectContent>
                       </Select>
+                      <span className="text-sm text-muted-foreground">per page</span>
                     </div>
                   </div>
 
-                  {/* Load Next Book Button */}
-                  {bookState.hasMore && (
-                    <div className="flex justify-center">
-                      <Button
-                        onClick={handleLoadNextBook}
-                        disabled={inactiveUsersLoading}
-                        variant="outline"
-                        className="h-10 px-6"
-                      >
-                        {inactiveUsersLoading ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                            Loading Book {bookState.currentBook + 1}...
-                          </>
-                        ) : (
-                          <>
-                            📖 Load Book {bookState.currentBook + 1}
-                            <span className="ml-2 text-xs">
-                              ({bookState.recordsPerBook} records)
-                            </span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
+                  {/* Pagination Controls - Amazon style */}
+                  <div className="flex items-center justify-between">
+                    {/* Previous Button */}
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePageChange(pagination.currentPage - 1)}
+                      disabled={!pagination.hasPrevPage || inactiveUsersLoading}
+                      className="flex items-center gap-2 h-9 px-4"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </Button>
 
-                  {/* All Books Loaded Message */}
-                  {!bookState.hasMore && bookState.currentBook > 0 && (
-                    <div className="text-center text-sm text-muted-foreground">
-                      📚 All {bookState.currentBook} books loaded ({inactiveUsers.length} total users)
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1">
+                      {(() => {
+                        const pages = [];
+                        const totalPages = pagination.totalPages;
+                        const currentPage = pagination.currentPage;
+
+                        // Calculate page range to show (Amazon shows ~7 pages)
+                        let startPage = Math.max(1, currentPage - 3);
+                        let endPage = Math.min(totalPages, startPage + 6);
+
+                        // Adjust start if we're near the end
+                        if (endPage - startPage < 6) {
+                          startPage = Math.max(1, endPage - 6);
+                        }
+
+                        // Add first page if not in range
+                        if (startPage > 1) {
+                          pages.push(
+                            <Button
+                              key={1}
+                              variant={1 === currentPage ? "default" : "ghost"}
+                              size="sm"
+                              onClick={() => handlePageChange(1)}
+                              disabled={inactiveUsersLoading}
+                              className="w-9 h-9 p-0"
+                            >
+                              1
+                            </Button>
+                          );
+                          if (startPage > 2) {
+                            pages.push(
+                              <span key="ellipsis1" className="px-2 text-muted-foreground">...</span>
+                            );
+                          }
+                        }
+
+                        // Add page numbers
+                        for (let i = startPage; i <= endPage; i++) {
+                          pages.push(
+                            <Button
+                              key={i}
+                              variant={i === currentPage ? "default" : "ghost"}
+                              size="sm"
+                              onClick={() => handlePageChange(i)}
+                              disabled={inactiveUsersLoading}
+                              className="w-9 h-9 p-0"
+                            >
+                              {i}
+                            </Button>
+                          );
+                        }
+
+                        // Add last page if not in range
+                        if (endPage < totalPages) {
+                          if (endPage < totalPages - 1) {
+                            pages.push(
+                              <span key="ellipsis2" className="px-2 text-muted-foreground">...</span>
+                            );
+                          }
+                          pages.push(
+                            <Button
+                              key={totalPages}
+                              variant={totalPages === currentPage ? "default" : "ghost"}
+                              size="sm"
+                              onClick={() => handlePageChange(totalPages)}
+                              disabled={inactiveUsersLoading}
+                              className="w-9 h-9 p-0"
+                            >
+                              {totalPages}
+                            </Button>
+                          );
+                        }
+
+                        return pages;
+                      })()}
                     </div>
-                  )}
+
+                    {/* Next Button */}
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePageChange(pagination.currentPage + 1)}
+                      disabled={!pagination.hasNextPage || inactiveUsersLoading}
+                      className="flex items-center gap-2 h-9 px-4"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* Page Info */}
+                  <div className="text-center mt-3">
+                    <span className="text-xs text-muted-foreground">
+                      Page {pagination.currentPage} of {pagination.totalPages}
+                    </span>
+                  </div>
                 </div>
               )}
             </CardContent>
