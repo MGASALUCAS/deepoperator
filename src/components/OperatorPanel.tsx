@@ -138,28 +138,28 @@ const OperatorPanel = () => {
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Load more state
-  const [loadMoreState, setLoadMoreState] = useState({
-    currentPage: 1,
-    total: 0,
-    limit: 100,
+  // Book-based loading state (Book 1 = first 100, Book 2 = next 100, etc.)
+  const [bookState, setBookState] = useState({
+    currentBook: 1,
+    recordsPerBook: 100,
+    loadedBooks: [] as InactiveUserData[][], // Array of books, each containing records
     hasMore: false,
-    loadedCount: 0, // Track how many records are currently loaded
+    totalRecords: 0,
   });
 
-  // Fetch inactive paid users on component mount
+  // Load first book on component mount
   useEffect(() => {
-    fetchInactiveUsers(1);
+    fetchBook(1);
   }, []);
 
-  // Fetch inactive paid users (supports load more)
-  const fetchInactiveUsers = async (page: number = 1, isLoadMore: boolean = false) => {
+  // Fetch inactive paid users by book (each book = 100 records)
+  const fetchBook = async (bookNumber: number) => {
     setInactiveUsersLoading(true);
     try {
       const params = new URLSearchParams();
       params.append('days', inactiveUsersFilters.days.toString());
-      params.append('limit', loadMoreState.limit.toString());
-      params.append('page', page.toString());
+      params.append('limit', bookState.recordsPerBook.toString());
+      params.append('page', bookNumber.toString());
 
       if (inactiveUsersFilters.startDate) {
         params.append('start', format(inactiveUsersFilters.startDate, 'yyyy-MM-dd'));
@@ -173,46 +173,40 @@ const OperatorPanel = () => {
       const data: InactiveUsersResponse = await response.json();
 
       if (response.ok) {
-        if (isLoadMore) {
-          // Append new data to existing data
-          setInactiveUsers(prev => [...prev, ...data.rows]);
-          setLoadMoreState(prev => ({
-            ...prev,
-            currentPage: data.page,
-            total: data.total,
-            hasMore: data.has_more,
-            loadedCount: prev.loadedCount + data.rows.length,
-          }));
+        // Store this book in our books array
+        setBookState(prev => {
+          const newLoadedBooks = [...prev.loadedBooks];
+          newLoadedBooks[bookNumber - 1] = data.rows; // Book 1 = index 0
 
-          toast({
-            title: "More Users Loaded",
-            description: `Loaded ${data.rows.length} additional users. Total loaded: ${loadMoreState.loadedCount + data.rows.length} of ${data.total}.`,
-          });
-        } else {
-          // Initial load - replace data
-          setInactiveUsers(data.rows);
-          setLoadMoreState(prev => ({
+          return {
             ...prev,
-            currentPage: data.page,
-            total: data.total,
+            loadedBooks: newLoadedBooks,
+            currentBook: bookNumber,
             hasMore: data.has_more,
-            loadedCount: data.rows.length,
-          }));
+            totalRecords: data.total,
+          };
+        });
 
-          toast({
-            title: "Inactive Users Loaded",
-            description: `Loaded ${data.rows.length} users${data.has_more ? ` (showing first ${loadMoreState.limit} of ${data.total})` : ''}.`,
-          });
-        }
+        // Update the displayed users (concatenate all loaded books)
+        setInactiveUsers(prev => {
+          const updatedBooks = [...bookState.loadedBooks];
+          updatedBooks[bookNumber - 1] = data.rows;
+          return updatedBooks.flat(); // Flatten all books into single array
+        });
+
+        toast({
+          title: `Book ${bookNumber} Loaded`,
+          description: `Loaded ${data.rows.length} users in Book ${bookNumber}${data.has_more ? ` (${bookState.loadedBooks.flat().length + data.rows.length} total loaded)` : ''}.`,
+        });
       } else {
         toast({
-          title: "Error Loading Inactive Users",
-          description: data.error || "Failed to fetch inactive users data",
+          title: "Error Loading Book",
+          description: data.error || `Failed to fetch Book ${bookNumber}`,
           variant: "destructive"
         });
       }
     } catch (error) {
-      console.error('Error fetching inactive users:', error);
+      console.error('Error fetching book:', error);
 
       // Check if it's a CORS or network error
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -233,11 +227,24 @@ const OperatorPanel = () => {
     }
   };
 
-  // Load more handler
-  const handleLoadMore = () => {
-    if (loadMoreState.hasMore && !inactiveUsersLoading) {
-      fetchInactiveUsers(loadMoreState.currentPage + 1, true);
+  // Load next book handler
+  const handleLoadNextBook = () => {
+    if (bookState.hasMore && !inactiveUsersLoading) {
+      fetchBook(bookState.currentBook + 1);
     }
+  };
+
+  // Reload first book when filters change
+  const handleFilterChange = () => {
+    setBookState({
+      currentBook: 1,
+      recordsPerBook: 100,
+      loadedBooks: [],
+      hasMore: false,
+      totalRecords: 0,
+    });
+    setInactiveUsers([]);
+    fetchBook(1);
   };
 
   // Reset load more state when filters change
@@ -551,7 +558,7 @@ const OperatorPanel = () => {
                           ...prev,
                           days: parseInt(e.target.value) || 15
                         }));
-                        resetAndFetchUsers();
+                        handleFilterChange();
                       }}
                       className="w-16 h-7 text-xs"
                       min="1"
@@ -569,7 +576,7 @@ const OperatorPanel = () => {
                           ...prev,
                           requirePhone: checked
                         }));
-                        resetAndFetchUsers();
+                        handleFilterChange();
                       }}
                       className="scale-75"
                     />
@@ -587,7 +594,7 @@ const OperatorPanel = () => {
                           endDate: undefined,
                           requirePhone: true,
                         });
-                        resetAndFetchUsers();
+                        handleFilterChange();
                       }}
                       className="h-7 px-2 text-xs"
                     >
@@ -621,7 +628,7 @@ const OperatorPanel = () => {
                               selected={inactiveUsersFilters.startDate}
                               onSelect={(date) => {
                                 setInactiveUsersFilters(prev => ({ ...prev, startDate: date }));
-                                resetAndFetchUsers();
+                                handleFilterChange();
                               }}
                               initialFocus
                             />
@@ -646,7 +653,7 @@ const OperatorPanel = () => {
                               selected={inactiveUsersFilters.endDate}
                               onSelect={(date) => {
                                 setInactiveUsersFilters(prev => ({ ...prev, endDate: date }));
-                                resetAndFetchUsers();
+                                handleFilterChange();
                               }}
                               initialFocus
                             />
@@ -766,27 +773,35 @@ const OperatorPanel = () => {
                 )}
               </div>
 
-              {/* Load More Controls */}
-              {(loadMoreState.total > 0) && (
+              {/* Book Controls */}
+              {(inactiveUsers.length > 0) && (
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-sm text-muted-foreground">
-                      Loaded {loadMoreState.loadedCount} of {loadMoreState.total} users
-                      {loadMoreState.hasMore && (
+                      <span className="font-medium">Books Loaded:</span>
+                      {Array.from({ length: bookState.currentBook }, (_, i) => (
+                        <Badge key={i + 1} variant="secondary" className="ml-1 text-xs">
+                          Book {i + 1}
+                        </Badge>
+                      ))}
+                      <span className="ml-2">
+                        ({inactiveUsers.length} total users)
+                      </span>
+                      {bookState.hasMore && (
                         <span className="text-primary ml-1">
-                          (+{Math.min(loadMoreState.limit, loadMoreState.total - loadMoreState.loadedCount)} more available)
+                          (Book {bookState.currentBook + 1} available)
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Load size:</span>
+                      <span className="text-xs text-muted-foreground">Records per book:</span>
                       <Select
-                        value={loadMoreState.limit.toString()}
+                        value={bookState.recordsPerBook.toString()}
                         onValueChange={(value) => {
-                          const newLimit = parseInt(value);
-                          setLoadMoreState(prev => ({
+                          const newRecordsPerBook = parseInt(value);
+                          setBookState(prev => ({
                             ...prev,
-                            limit: newLimit,
+                            recordsPerBook: newRecordsPerBook,
                           }));
                         }}
                         disabled={inactiveUsersLoading}
@@ -804,11 +819,11 @@ const OperatorPanel = () => {
                     </div>
                   </div>
 
-                  {/* Load More Button */}
-                  {loadMoreState.hasMore && (
+                  {/* Load Next Book Button */}
+                  {bookState.hasMore && (
                     <div className="flex justify-center">
                       <Button
-                        onClick={handleLoadMore}
+                        onClick={handleLoadNextBook}
                         disabled={inactiveUsersLoading}
                         variant="outline"
                         className="h-10 px-6"
@@ -816,13 +831,13 @@ const OperatorPanel = () => {
                         {inactiveUsersLoading ? (
                           <>
                             <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                            Loading...
+                            Loading Book {bookState.currentBook + 1}...
                           </>
                         ) : (
                           <>
-                            Load More Users
+                            📖 Load Book {bookState.currentBook + 1}
                             <span className="ml-2 text-xs">
-                              (+{Math.min(loadMoreState.limit, loadMoreState.total - loadMoreState.loadedCount)})
+                              ({bookState.recordsPerBook} records)
                             </span>
                           </>
                         )}
@@ -830,10 +845,10 @@ const OperatorPanel = () => {
                     </div>
                   )}
 
-                  {/* Load Complete Message */}
-                  {!loadMoreState.hasMore && loadMoreState.loadedCount > 0 && (
+                  {/* All Books Loaded Message */}
+                  {!bookState.hasMore && bookState.currentBook > 0 && (
                     <div className="text-center text-sm text-muted-foreground">
-                      All {loadMoreState.total} users have been loaded
+                      📚 All {bookState.currentBook} books loaded ({inactiveUsers.length} total users)
                     </div>
                   )}
                 </div>
