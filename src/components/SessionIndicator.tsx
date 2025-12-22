@@ -63,7 +63,7 @@ if (!timeLeft) return null;
           </span>
         </Badge>
         {/* Desktop Logout Button */}
-        <div className="hidden lg:block">
+        <div className="opacity-0 hover:opacity-100 lg:opacity-100 transition-opacity duration-200">
           <Button
             variant="outline"
             size="sm"

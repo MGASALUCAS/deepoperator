@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -111,6 +111,7 @@ interface InactiveUsersResponse {
   total: number;
   page: number;
   limit: number;
+  error?: string;
   has_more: boolean;
   rows: InactiveUserData[];
 }
@@ -156,89 +157,337 @@ const OperatorPanel = () => {
     fetchAllInactiveUsers();
   }, []);
 
-  // Fetch all inactive paid users (client-side pagination approach)
+  // Request deduplication and caching (Amazon-style optimization)
+  const activeRequestsRef = useRef<Set<string>>(new Set());
+  const responseCacheRef = useRef<Map<string, { data: InactiveUsersResponse, timestamp: number }>>(new Map());
+
+  // Cache duration: 5 minutes for filter results
+  const CACHE_DURATION = 5 * 60 * 1000;
+
+  // Amazon-style retry logic with exponential backoff
+  const retryWithBackoff = async (fn: () => Promise<any>, maxRetries = 3, baseDelay = 1000) => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        const isLastAttempt = attempt === maxRetries;
+        const isRetryableError = error instanceof Error && (
+          error.name === 'AbortError' ||
+          error.message.includes('network') ||
+          error.message.includes('fetch') ||
+          error.message.includes('HTTP 5') ||
+          error.message.includes('HTTP 429')
+        );
+
+        if (isLastAttempt || !isRetryableError) {
+          throw error;
+        }
+
+        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000; // Exponential backoff with jitter
+        console.log(`🔄 [Amazon] Retrying request (attempt ${attempt + 1}/${maxRetries}) after ${delay}ms delay`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
+
+  // Amazon-quality data fetching with comprehensive error handling and performance optimization
   const fetchAllInactiveUsers = async () => {
+    // Generate request signature for deduplication (prevents duplicate requests)
+    const requestSignature = JSON.stringify({
+      days: inactiveUsersFilters.days,
+      startDate: inactiveUsersFilters.startDate?.toISOString(),
+      endDate: inactiveUsersFilters.endDate?.toISOString(),
+      requirePhone: inactiveUsersFilters.requirePhone
+    });
+
+    // Prevent duplicate concurrent requests (Amazon UX pattern)
+    if (activeRequestsRef.current.has(requestSignature)) {
+      console.log('🚫 [Amazon] Duplicate request prevented:', requestSignature.substring(0, 8));
+      return;
+    }
+
+    // Check cache first (Amazon performance optimization)
+    const cachedResponse = responseCacheRef.current.get(requestSignature);
+    if (cachedResponse && (Date.now() - cachedResponse.timestamp) < CACHE_DURATION) {
+      console.log('⚡ [Amazon] Using cached response for:', requestSignature.substring(0, 8));
+      const data = cachedResponse.data;
+
+      // Apply cached data immediately
+      setAllInactiveUsers(data.rows);
+      const totalItems = Math.max(0, data.total || data.rows.length);
+      const totalPages = Math.max(1, Math.ceil(totalItems / pagination.itemsPerPage));
+
+      setPagination(prev => ({
+        ...prev,
+        currentPage: 1,
+        totalItems: totalItems,
+        totalPages: totalPages,
+        hasNextPage: totalPages > 1,
+        hasPrevPage: false,
+      }));
+
+      applyClientSidePagination(1, pagination.itemsPerPage, data.rows);
+
+      toast({
+        title: "Data Loaded Instantly",
+        description: `Found ${totalItems.toLocaleString()} users from cache.`,
+        variant: "default"
+      });
+
+      return; // Skip network request
+    }
+
+    // Add to active requests tracker
+    activeRequestsRef.current.add(requestSignature);
     setInactiveUsersLoading(true);
+
+    // Show loading feedback for long-running requests
+    const loadingToastId = setTimeout(() => {
+      if (inactiveUsersLoading) {
+        toast({
+          title: "Loading Data",
+          description: "Fetching user data... This may take a moment for large datasets.",
+          variant: "default"
+        });
+      }
+    }, 3000);
+
     try {
       const params = new URLSearchParams();
       params.append('days', inactiveUsersFilters.days.toString());
 
+      // Build filter parameters with robust validation
       if (inactiveUsersFilters.startDate) {
-        params.append('start', format(inactiveUsersFilters.startDate, 'yyyy-MM-dd'));
+        try {
+          const formattedDate = format(inactiveUsersFilters.startDate, 'yyyy-MM-dd');
+          params.append('registered_start', formattedDate);
+        } catch (dateError) {
+          console.error('❌ [Amazon] Invalid start date format:', inactiveUsersFilters.startDate);
+          throw new Error('Invalid registration start date format');
+        }
       }
+
       if (inactiveUsersFilters.endDate) {
-        params.append('end', format(inactiveUsersFilters.endDate, 'yyyy-MM-dd'));
+        try {
+          const formattedDate = format(inactiveUsersFilters.endDate, 'yyyy-MM-dd');
+          params.append('subscription_end_end', formattedDate);
+        } catch (dateError) {
+          console.error('❌ [Amazon] Invalid end date format:', inactiveUsersFilters.endDate);
+          throw new Error('Invalid expiration end date format');
+        }
       }
+
       params.append('require_phone', inactiveUsersFilters.requirePhone.toString());
 
-      console.log('🔍 Fetching ALL users with params:', {
-        days: inactiveUsersFilters.days,
-        startDate: inactiveUsersFilters.startDate,
-        endDate: inactiveUsersFilters.endDate,
-        requirePhone: inactiveUsersFilters.requirePhone
+      // Amazon-style comprehensive logging for production debugging
+      const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log('🔍 [Amazon] Fetching users with filters:', {
+        requestId: requestId.substring(0, 8),
+        filters: {
+          days: inactiveUsersFilters.days,
+          registered_start: inactiveUsersFilters.startDate ? format(inactiveUsersFilters.startDate, 'yyyy-MM-dd') : null,
+          subscription_end_end: inactiveUsersFilters.endDate ? format(inactiveUsersFilters.endDate, 'yyyy-MM-dd') : null,
+          require_phone: inactiveUsersFilters.requirePhone
+        },
+        hasFilters: !!(inactiveUsersFilters.startDate || inactiveUsersFilters.endDate),
+        timestamp: new Date().toISOString()
       });
 
-      const response = await fetch(`${API_ENDPOINTS.INACTIVE_PAID_USERS}?${params}`);
+      // Add timeout and request tracing (Amazon reliability patterns)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.warn('⏰ [Amazon] Request timeout for:', requestId.substring(0, 8));
+        controller.abort();
+      }, 90000); // 90s timeout for large datasets
+
+      const response = await retryWithBackoff(async () => {
+        return fetch(`${API_ENDPOINTS.INACTIVE_PAID_USERS}?${params}`, {
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Request-ID': requestId,
+            'X-Client-Version': '1.0.0'
+          }
+        });
+      }, 2, 2000); // 2 retries with 2s base delay
+
+      clearTimeout(timeoutId);
+
+      // Handle HTTP errors with specific status codes
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+      }
+
       const data: InactiveUsersResponse = await response.json();
 
-      console.log('📊 API Response:', {
-        status: response.status,
-        ok: response.ok,
-        totalRecords: data.total,
-        rowsReceived: data.rows?.length || 0,
-        hasMore: data.has_more
+      // Validate response structure (Amazon data validation)
+      if (!data) {
+        throw new Error('Invalid API response - received empty or null response');
+      }
+
+      if (!Array.isArray(data.rows)) {
+        throw new Error('Invalid API response structure - rows must be an array');
+      }
+
+      // Calculate pagination info with bounds checking and multiple fallbacks
+      const totalItems = Math.max(0,
+        (typeof data.total === 'number' ? data.total : null) ||
+        (typeof data.count === 'number' ? data.count : null) ||
+        data.rows.length
+      );
+
+      // More flexible total count validation with fallbacks
+      if (typeof data.total !== 'number' && typeof data.count !== 'number') {
+        console.warn('⚠️ [Amazon] API response missing both total and count fields, using rows.length as fallback');
+      }
+
+      console.log('✅ [Amazon] Successfully fetched users:', {
+        requestId: requestId.substring(0, 8),
+        totalRecords: totalItems,
+        totalSource: typeof data.total === 'number' ? 'total' : (typeof data.count === 'number' ? 'count' : 'rows.length'),
+        rowsReceived: data.rows.length,
+        hasMore: data.has_more,
+        filtersApplied: !!(inactiveUsersFilters.startDate || inactiveUsersFilters.endDate),
+        responseTime: new Date().toISOString()
       });
 
-      if (response.ok) {
-        // Store all data for client-side pagination
-        setAllInactiveUsers(data.rows || []);
+      // Store all data for client-side pagination
+      setAllInactiveUsers(data.rows);
+      const totalPages = Math.max(1, Math.ceil(totalItems / pagination.itemsPerPage));
 
-        // Calculate pagination info
-        const totalItems = data.total || data.rows.length;
-        const totalPages = Math.ceil(totalItems / pagination.itemsPerPage);
+      setPagination(prev => ({
+        ...prev,
+        currentPage: 1, // Always reset to first page on new data
+        totalItems: totalItems,
+        totalPages: totalPages,
+        hasNextPage: totalPages > 1,
+        hasPrevPage: false,
+      }));
 
-        setPagination(prev => ({
-          ...prev,
-          currentPage: 1, // Reset to first page
-          totalItems: totalItems,
-          totalPages: totalPages,
-          hasNextPage: totalPages > 1,
-          hasPrevPage: false,
-        }));
+      // Apply initial pagination with safety checks
+      applyClientSidePagination(1, pagination.itemsPerPage, data.rows);
 
-        // Apply initial pagination
-        applyClientSidePagination(1, pagination.itemsPerPage, data.rows || []);
+      // Cache successful response (Amazon performance optimization)
+      responseCacheRef.current.set(requestSignature, {
+        data: data,
+        timestamp: Date.now()
+      });
 
+      // Clean up old cache entries (keep cache size manageable)
+      if (responseCacheRef.current.size > 10) {
+        const oldestKey = responseCacheRef.current.keys().next().value;
+        responseCacheRef.current.delete(oldestKey);
+      }
+
+      // Smart user feedback based on results
+      if (totalItems === 0) {
         toast({
-          title: "Inactive Users Loaded",
-          description: `Found ${totalItems} inactive paid users. Showing page 1.`,
+          title: "No Users Found",
+          description: "No inactive users match your current filters. Try adjusting your search criteria.",
+          variant: "default"
+        });
+      } else if (totalItems > 1000) {
+        toast({
+          title: "Large Dataset Loaded",
+          description: `Successfully loaded ${totalItems.toLocaleString()} users. Use filters to narrow down results.`,
+          variant: "default"
         });
       } else {
         toast({
-          title: "Error Loading Users",
-          description: data.error || "Failed to fetch inactive users data",
-          variant: "destructive"
+          title: "Users Loaded Successfully",
+          description: `Found ${totalItems.toLocaleString()} inactive paid users matching your filters.`,
+          variant: "default"
         });
       }
+
     } catch (error) {
-      console.error('Error fetching inactive users:', error);
-
-      // Check if it's a CORS or network error
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        toast({
-          title: "CORS/Network Error",
-          description: "Unable to connect to the API. Check if the backend server is running and CORS is configured.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Connection Error",
-          description: "Failed to connect to the server. Please try again.",
-          variant: "destructive"
-        });
+      // Enhanced error logging with response structure analysis
+      let responseStructure = null;
+      try {
+        // If we have a response object, try to get its structure
+        if (error && typeof error === 'object' && 'response' in error) {
+          const response = (error as any).response;
+          if (response && typeof response.json === 'function') {
+            const responseData = await response.json().catch(() => null);
+            if (responseData) {
+              responseStructure = {
+                hasTotal: typeof responseData.total === 'number',
+                hasCount: typeof responseData.count === 'number',
+                hasRows: Array.isArray(responseData.rows),
+                rowsLength: Array.isArray(responseData.rows) ? responseData.rows.length : 'N/A',
+                keys: Object.keys(responseData)
+              };
+            }
+          }
+        }
+      } catch (analysisError) {
+        // Ignore analysis errors
       }
+
+      console.error('❌ [Amazon] Error fetching users:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        responseStructure,
+        filters: {
+          days: inactiveUsersFilters.days,
+          hasStartDate: !!inactiveUsersFilters.startDate,
+          hasEndDate: !!inactiveUsersFilters.endDate,
+          requirePhone: inactiveUsersFilters.requirePhone
+        },
+        timestamp: new Date().toISOString()
+      });
+
+      // Amazon-style error categorization and user-friendly messages
+      let errorTitle = "Unable to Load Users";
+      let errorDescription = "We're experiencing technical difficulties. Please try again.";
+      let shouldRetry = true;
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorTitle = "Request Timeout";
+          errorDescription = "The request took longer than expected to load your data. This might be due to a large dataset or slow connection. Please try narrowing your filters or try again.";
+          shouldRetry = true;
+        } else if (error.message.includes('signal is aborted')) {
+          errorTitle = "Request Cancelled";
+          errorDescription = "The request was cancelled, possibly due to a new filter being applied. If this persists, please try again.";
+          shouldRetry = true;
+        } else if (error.message.includes('HTTP 404')) {
+          errorTitle = "Service Unavailable";
+          errorDescription = "The user service is currently unavailable. Please try again later.";
+          shouldRetry = false;
+        } else if (error.message.includes('HTTP 429')) {
+          errorTitle = "Too Many Requests";
+          errorDescription = "Please wait a moment before trying again.";
+        } else if (error.message.includes('HTTP 5')) {
+          errorTitle = "Server Error";
+          errorDescription = "Our servers are experiencing issues. Please try again in a few minutes.";
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorTitle = "Connection Problem";
+          errorDescription = "Please check your internet connection and try again.";
+        } else if (error.message.includes('Invalid')) {
+          errorTitle = "Invalid Request";
+          errorDescription = error.message;
+          shouldRetry = false;
+        }
+      }
+
+      toast({
+        title: errorTitle,
+        description: errorDescription,
+        variant: "destructive"
+      });
+
+      // Clear data on critical errors only
+      if (!shouldRetry) {
+        setAllInactiveUsers([]);
+        setInactiveUsers([]);
+      }
+
     } finally {
+      // Always clean up active request tracking and loading indicators
+      activeRequestsRef.current.delete(requestSignature);
       setInactiveUsersLoading(false);
+      clearTimeout(loadingToastId);
     }
   };
 
@@ -290,20 +539,85 @@ const OperatorPanel = () => {
     applyClientSidePagination(1, newItemsPerPage);
   };
 
-  // Reload all data when filters change
-  const handleFilterChange = () => {
-    setAllInactiveUsers([]);
-    setInactiveUsers([]);
-    setPagination(prev => ({
-      ...prev,
-      currentPage: 1,
-      totalItems: 0,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPrevPage: false,
-    }));
-    fetchAllInactiveUsers();
+  // Amazon-style date validation and filtering
+  const validateDateFilters = (filters: typeof inactiveUsersFilters) => {
+    const { startDate, endDate } = filters;
+    const errors: string[] = [];
+
+    // Check if dates are in reasonable ranges
+    const now = new Date();
+    const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+    if (startDate) {
+      if (startDate < oneYearAgo) {
+        errors.push('Registration start date cannot be more than 1 year ago');
+      }
+      if (startDate > oneYearFromNow) {
+        errors.push('Registration start date cannot be more than 1 year in the future');
+      }
+    }
+
+    if (endDate) {
+      if (endDate < oneYearAgo) {
+        errors.push('Expiration end date cannot be more than 1 year ago');
+      }
+      if (endDate > oneYearFromNow) {
+        errors.push('Expiration end date cannot be more than 1 year in the future');
+      }
+    }
+
+    return errors;
   };
+
+  // Debounced filter change handler (Amazon-style performance optimization)
+  const debouncedFilterRef = useRef<NodeJS.Timeout>();
+  const handleFilterChange = useCallback(() => {
+    // Clear any pending debounced calls
+    if (debouncedFilterRef.current) {
+      clearTimeout(debouncedFilterRef.current);
+    }
+
+    // Debounce filter changes by 300ms (Amazon UX pattern)
+    debouncedFilterRef.current = setTimeout(() => {
+      // Validate filters before proceeding
+      const validationErrors = validateDateFilters(inactiveUsersFilters);
+      if (validationErrors.length > 0) {
+        toast({
+          title: "Invalid Date Filters",
+          description: validationErrors.join('. '),
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Reset pagination state
+      setPagination(prev => ({
+        ...prev,
+        currentPage: 1,
+        totalItems: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      }));
+
+      // Clear existing data
+      setAllInactiveUsers([]);
+      setInactiveUsers([]);
+
+      // Fetch with validated filters
+      fetchAllInactiveUsers();
+    }, 300);
+  }, [inactiveUsersFilters]);
+
+  // Cleanup debounced calls on unmount
+  useEffect(() => {
+    return () => {
+      if (debouncedFilterRef.current) {
+        clearTimeout(debouncedFilterRef.current);
+      }
+    };
+  }, []);
 
 
   // --- Rules handlers for the AutomationRulesPanel ---
@@ -583,7 +897,7 @@ const OperatorPanel = () => {
                         <RefreshCw className="w-3 h-3" />
                       )}
                     </Button>
-                    <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+                    <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters} className="hidden">
                       <CollapsibleTrigger asChild>
                         <Button variant="outline" size="sm" className="h-8">
                           <Filter className="w-3 h-3 mr-1" />
@@ -616,7 +930,7 @@ const OperatorPanel = () => {
                     <span className="text-xs text-muted-foreground">days</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 hidden">
                     <span className="text-xs font-medium text-muted-foreground">Phone:</span>
                     <Switch
                       checked={inactiveUsersFilters.requirePhone}
@@ -657,7 +971,7 @@ const OperatorPanel = () => {
                 <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
                   <CollapsibleContent className="space-y-3">
                     <div className="border-t pt-3">
-                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Subscription End Date Range</h4>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Date Filters</h4>
                       <div className="flex gap-2 flex-wrap">
                         <Popover>
                           <PopoverTrigger asChild>
@@ -668,10 +982,10 @@ const OperatorPanel = () => {
                               }`}
                             >
                               <CalendarIcon className="mr-1 h-3 w-3" />
-                              {inactiveUsersFilters.startDate ? format(inactiveUsersFilters.startDate, "MMM dd") : "Start"}
+                              {inactiveUsersFilters.startDate ? format(inactiveUsersFilters.startDate, "MMM dd") : "Registered From"}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0 bg-card border border-border shadow-lg" align="start">
                             <Calendar
                               mode="single"
                               selected={inactiveUsersFilters.startDate}
@@ -693,10 +1007,10 @@ const OperatorPanel = () => {
                               }`}
                             >
                               <CalendarIcon className="mr-1 h-3 w-3" />
-                              {inactiveUsersFilters.endDate ? format(inactiveUsersFilters.endDate, "MMM dd") : "End"}
+                              {inactiveUsersFilters.endDate ? format(inactiveUsersFilters.endDate, "MMM dd") : "Expires By"}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0 bg-card border border-border shadow-lg" align="start">
                             <Calendar
                               mode="single"
                               selected={inactiveUsersFilters.endDate}
